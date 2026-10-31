@@ -89,3 +89,4 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
     </header>
   );
 };
+

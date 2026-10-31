@@ -41,3 +41,4 @@ This document establishes the prioritized selection of **12 core components and 
 
 - Components live in `apps/web/src/components/ui/` (shared base primitives) and `apps/web/src/components/blocks/` (domain-specific composite blocks).
 - A dedicated dev-only showcase route (`/dev/showcase`) renders every component in all interactive states (default, loading, error, empty, populated, disabled, and mobile viewport).
+

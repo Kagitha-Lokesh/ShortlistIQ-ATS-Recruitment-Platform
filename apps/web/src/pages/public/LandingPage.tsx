@@ -1,68 +1,94 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, ShieldCheck, Cpu, FileText, Scale, EyeOff } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  ShieldCheck,
+  FileText,
+  EyeOff,
+  Scale,
+  Building2,
+  ChevronDown,
+  HelpCircle,
+  FileCheck,
+  Search,
+  SlidersHorizontal,
+  Lock
+} from 'lucide-react';
 import { APP_NAME } from '@shortlistiq/shared';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button.js';
+import { Badge } from '../../components/ui/Badge.js';
+import { Card, CardContent } from '../../components/ui/Card.js';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useGSAP(() => {
     if (typeof window === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
-
     if (heroRef.current) {
-      tl.fromTo(
-        heroRef.current.children,
-        { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.08 }
-      );
-    }
-
-    if (cardsRef.current) {
-      tl.fromTo(
-        cardsRef.current.children,
+      gsap.fromTo(
+        heroRef.current.querySelectorAll('.hero-fade'),
         { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.35, stagger: 0.06 },
-        '-=0.2'
+        { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'power2.out' }
       );
     }
-  }, []);
+  }, { scope: heroRef });
+
+  const faqs = [
+    {
+      q: 'Is this ATS score what actual employers’ software will output?',
+      a: 'No single "universal ATS" algorithm exists across employers. ShortlistIQ provides a deterministic estimate of match against this specific job description’s explicit requirements. It identifies extractability issues and missing keyword evidence rather than simulating a proprietary black box.'
+    },
+    {
+      q: 'Can the algorithm reject me automatically?',
+      a: 'Never. In ShortlistIQ, automated outcomes are strictly advisory recommendations (Recommended Shortlist, Needs Review, or Recommended Not Shortlisted). Final decisions are made exclusively by human recruiters and hiring managers in the HR review interface.'
+    },
+    {
+      q: 'How is my uploaded resume data protected?',
+      a: 'All guest checks and candidate files are automatically purged after 30 days. PII is scrubbed before scoring calculations, and your resume text is never used to train machine learning models. You can also trigger immediate deletion via our self-service portal.'
+    },
+    {
+      q: 'What if my resume uses multi-column or modern layouts?',
+      a: 'Our ingestion engine uses 2D positional coordinate extraction. Instead of joining text line-by-line across columns, it reconstructs your resume in its true reading order, preventing column collision errors common in basic parsers.'
+    }
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-16 space-y-16">
-      {/* Editorial Hero Section */}
-      <section ref={heroRef} className="text-center max-w-3xl mx-auto space-y-6">
-        <div className="inline-flex">
-          <Badge variant="outline" size="md">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>
-            Transparent Recruitment Screening & ATS Alignment
+    <div className="space-y-20 pb-20">
+      {/* 1. Restrained Editorial Hero */}
+      <section ref={heroRef} className="max-w-4xl mx-auto text-center px-4 pt-12 sm:pt-16">
+        <div className="hero-fade inline-flex mb-5">
+          <Badge variant="outline" size="md" className="gap-1.5 py-1 px-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+            <span className="font-semibold text-ink-primary">Deterministic Ingest & Verification</span>
+            <span className="text-ink-muted">•</span>
+            <span className="text-ink-secondary">Zero Black-Box Guesswork</span>
           </Badge>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-ink-primary leading-tight">
-          Screen resumes accurately with zero hallucination.
+        <h1 className="hero-fade text-3xl sm:text-5xl font-extrabold tracking-tight text-ink-primary leading-[1.12]">
+          Screen resumes accurately with verbatim evidence.
         </h1>
 
-        <p className="text-sm sm:text-base text-ink-secondary leading-relaxed max-w-2xl mx-auto">
-          ShortlistIQ evaluates candidate resumes with deterministic parsing, verbatim evidence citations, and strict demographic blindness. Designed for high-stakes hiring where people's livelihoods are on the line.
+        <p className="hero-fade text-sm sm:text-base text-ink-secondary mt-4 max-w-2xl mx-auto leading-relaxed">
+          ShortlistIQ calculates deterministic keyword match estimates against exact job descriptions. No black-box AI rejections, no demographic bias, and 100% extractability verification.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        {/* Action Buttons */}
+        <div className="hero-fade mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button
             variant="primary"
             size="lg"
             rightIcon={<ArrowRight className="w-4 h-4" />}
             onClick={() => navigate('/checker')}
           >
-            Try Free ATS Checker (No Signup)
+            Check ATS Alignment Free (No Signup)
           </Button>
 
           <Button
@@ -70,82 +96,231 @@ export const LandingPage: React.FC = () => {
             size="lg"
             onClick={() => navigate('/auth/signup-hr')}
           >
-            For Recruiters & Hiring Teams
+            HR Recruiter Workspace
           </Button>
         </div>
+
+        <p className="hero-fade text-[11px] text-ink-muted mt-3">
+          Scores are honest estimates against specific job criteria • Strict 30-day data retention
+        </p>
       </section>
 
-      {/* 3 Core Ethical & Accuracy Pillars */}
-      <section ref={cardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-surface border border-border rounded-md p-5 shadow-subtle space-y-2">
-          <div className="w-8 h-8 rounded bg-surface-subtle border border-border flex items-center justify-center text-ink-primary">
-            <Cpu className="w-4 h-4" />
-          </div>
-          <h2 className="text-sm font-bold text-ink-primary">Deterministic Ingest & Matching</h2>
-          <p className="text-xs text-ink-secondary leading-relaxed">
-            2D coordinate layout reconstruction rebuilds multi-column resumes without line interleaving. Matches are backed by exact verbatim snippets.
-          </p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-md p-5 shadow-subtle space-y-2">
-          <div className="w-8 h-8 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-800">
-            <EyeOff className="w-4 h-4" />
-          </div>
-          <h2 className="text-sm font-bold text-ink-primary">Strict Demographic Blindness</h2>
-          <p className="text-xs text-ink-secondary leading-relaxed">
-            Name, gender, contact info, photo, and institution prestige are stripped prior to scoring. Recruiter blind-mode prevents unconscious bias.
-          </p>
-        </div>
-
-        <div className="bg-surface border border-border rounded-md p-5 shadow-subtle space-y-2">
-          <div className="w-8 h-8 rounded bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800">
-            <Scale className="w-4 h-4" />
-          </div>
-          <h2 className="text-sm font-bold text-ink-primary">Zero Automated Rejections</h2>
-          <p className="text-xs text-ink-secondary leading-relaxed">
-            No candidate is ever rejected by the machine alone. Outcomes are advisory: recommended shortlist, recommended not shortlisted, or routed to human review.
-          </p>
-        </div>
-      </section>
-
-      {/* High-Trust Commitments Card */}
-      <section className="bg-surface border border-border rounded-md p-6 sm:p-8 shadow-subtle space-y-4">
-        <div>
-          <h2 className="text-sm font-bold text-ink-primary uppercase tracking-wider">
-            High-Stakes Screening Commitments
+      {/* 2. Three-Step Explainer */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-10">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ink-muted block">
+            How It Works
+          </span>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink-primary mt-1">
+            Three steps from raw PDF to verified ATS alignment
           </h2>
-          <p className="text-xs text-ink-secondary mt-0.5">
-            Engineered to prioritize human oversight, data privacy, and explainable recruitment.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-ink-secondary pt-2">
-          <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-state-success shrink-0 mt-0.5" />
-            <span>
-              <Link to="/privacy/delete-data" className="text-ink-primary underline font-semibold hover:text-brand-accent">
-                Candidate Right to Erasure
-              </Link>{' '}
-              and 30-day automated data retention lifecycle.
-            </span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Step 1 */}
+          <Card className="p-6 space-y-3">
+            <div className="w-8 h-8 rounded bg-surface-subtle border border-border flex items-center justify-center font-bold text-xs text-ink-primary">
+              01
+            </div>
+            <h3 className="text-sm font-bold text-ink-primary">Positional Document Parsing</h3>
+            <p className="text-xs text-ink-secondary leading-relaxed">
+              Upload any text-based PDF or DOCX resume. 2D coordinate extraction maps sections, dates, and bullet points without multi-column corruption.
+            </p>
+          </Card>
+
+          {/* Step 2 */}
+          <Card className="p-6 space-y-3">
+            <div className="w-8 h-8 rounded bg-surface-subtle border border-border flex items-center justify-center font-bold text-xs text-ink-primary">
+              02
+            </div>
+            <h3 className="text-sm font-bold text-ink-primary">Deterministic Match Scoring</h3>
+            <p className="text-xs text-ink-secondary leading-relaxed">
+              Every score breakdown is computed across 5 transparent pillars: TF-IDF keywords, required skills, work history, formatting, and education.
+            </p>
+          </Card>
+
+          {/* Step 3 */}
+          <Card className="p-6 space-y-3">
+            <div className="w-8 h-8 rounded bg-surface-subtle border border-border flex items-center justify-center font-bold text-xs text-ink-primary">
+              03
+            </div>
+            <h3 className="text-sm font-bold text-ink-primary">Verbatim Optimization & Export</h3>
+            <p className="text-xs text-ink-secondary leading-relaxed">
+              Review grounded rephrasings with before/after diffs. Export to 100% extractable single-column PDF or compile via LaTeX with zero formatting errors.
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      {/* 3. Section for HR Teams */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="rounded-lg border border-border bg-surface p-6 sm:p-10 shadow-subtle flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-3 max-w-xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-semibold bg-surface-subtle border border-border text-ink-secondary">
+              <Building2 className="w-3.5 h-3.5 text-primary" />
+              <span>For Talent Acquisition & Hiring Teams</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink-primary">
+              Data-dense screening without autonomous rejection risk
+            </h2>
+            <p className="text-xs text-ink-secondary leading-relaxed">
+              Bulk upload batches of resumes with instant candidate tables, customizable dealbreaker knockout rules, and a side-by-side evidence inspection drawer. Toggle blind screening to eliminate demographic bias from hiring decisions.
+            </p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-ink-primary pt-1">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-state-success flex-shrink-0" />
+                <span>Demographic Blind Review mode</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-state-success flex-shrink-0" />
+                <span>Verbatim resume evidence side-by-side</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-state-success flex-shrink-0" />
+                <span>Mandatory human sign-off audit trail</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-state-success flex-shrink-0" />
+                <span>Multi-tenant database privacy</span>
+              </li>
+            </ul>
           </div>
 
-          <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-state-success shrink-0 mt-0.5" />
-            <span>Zero personal candidate data or resume text logged to server metrics.</span>
-          </div>
-
-          <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-state-success shrink-0 mt-0.5" />
-            <span>Multi-tenant organization data isolation enforced at Postgres database layer.</span>
-          </div>
-
-          <div className="flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-state-success shrink-0 mt-0.5" />
-            <span>WCAG 2.1 AA accessible, calm light theme without dark mode or visual distractions.</span>
+          <div className="flex-shrink-0 text-center space-y-3">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => navigate('/auth/signup-hr')}
+            >
+              Create Recruiter Account
+            </Button>
+            <p className="text-[11px] text-ink-muted">
+              Free tier includes full batch screening & criteria setup
+            </p>
           </div>
         </div>
       </section>
+
+      {/* 4. Privacy & Data Rights Section */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="rounded-lg border border-border bg-surface-subtle/50 p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+            <div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-state-success" />
+                <h2 className="text-base font-bold text-ink-primary">
+                  Candidate Data Protection & Privacy Rights
+                </h2>
+              </div>
+              <p className="text-xs text-ink-secondary mt-0.5">
+                Engineered to honor applicant dignity and international privacy regulations (GDPR, CCPA).
+              </p>
+            </div>
+
+            <Link to="/privacy/delete-data">
+              <Button variant="outline" size="sm" leftIcon={<Lock className="w-3.5 h-3.5" />}>
+                Candidate Right to Erasure Portal
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-ink-secondary">
+            <div className="space-y-1">
+              <h3 className="font-semibold text-ink-primary">30-Day Automated Lifecycle</h3>
+              <p className="leading-relaxed">
+                Guest candidate checks and uploaded resume documents expire automatically after 30 days and are permanently purged from disk and database.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-semibold text-ink-primary">Pre-Scoring PII Stripping</h3>
+              <p className="leading-relaxed">
+                Candidate names, emails, phone numbers, postal addresses, and photos are stripped before algorithmic matching to prevent algorithmic discrimination.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-semibold text-ink-primary">Instant Self-Service Erasure</h3>
+              <p className="leading-relaxed">
+                Candidates can verify their email address and purge all historical applications, scores, and files across all hiring organizations anytime.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Frequently Asked Questions */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 space-y-4">
+        <div className="text-center mb-6">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-ink-muted block">
+            Got Questions?
+          </span>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink-primary mt-1">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="space-y-2.5">
+          {faqs.map((faq, index) => {
+            const isOpen = openFaq === index;
+            return (
+              <div
+                key={index}
+                className="rounded-md border border-border bg-surface transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(isOpen ? null : index)}
+                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs font-semibold text-ink-primary hover:text-primary select-none"
+                  aria-expanded={isOpen}
+                >
+                  <span>{faq.q}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-ink-muted transition-transform duration-200 ${
+                      isOpen ? 'transform rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-1 text-xs text-ink-secondary leading-relaxed border-t border-border/60">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 6. Footer */}
+      <footer className="border-t border-border pt-10 text-xs text-ink-muted">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded bg-primary text-white font-bold text-[10px] flex items-center justify-center">
+              SQ
+            </div>
+            <span className="font-semibold text-ink-primary">{APP_NAME}</span>
+            <span className="text-border-strong">•</span>
+            <span>Deterministic ATS Resume Screening</span>
+          </div>
+
+          <div className="flex items-center gap-5 text-xs text-ink-secondary">
+            <Link to="/checker" className="hover:text-ink-primary transition-colors">
+              Candidate Checker
+            </Link>
+            <Link to="/auth/signin" className="hover:text-ink-primary transition-colors">
+              HR Sign In
+            </Link>
+            <Link to="/privacy/delete-data" className="hover:text-ink-primary transition-colors">
+              Data Erasure
+            </Link>
+            <Link to="/privacy" className="hover:text-ink-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-ink-primary transition-colors">
+              Terms
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

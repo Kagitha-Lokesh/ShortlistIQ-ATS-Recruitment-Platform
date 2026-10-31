@@ -102,3 +102,4 @@ export const HeroRestrained: React.FC<HeroRestrainedProps> = ({
     </section>
   );
 };
+

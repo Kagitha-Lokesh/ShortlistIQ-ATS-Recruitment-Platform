@@ -64,3 +64,4 @@ export const BlindReviewBar: React.FC<BlindReviewBarProps> = ({
     </div>
   );
 };
+
