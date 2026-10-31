@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  hr
+  candidate
+}
+
+enum CheckStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum SuggestionStatus {
+  pending
+  accepted
+  rejected
+  edited
+}
+
+enum BatchStatus {
+  draft
+  active
+  closed
+  archived
+  finalized
+}
+
+enum CandidateSource {
+  upload
+  form
+}
+
+enum CandidateStatus {
+  pending
+  processing
+  scored
+  failed
+}
+
+enum CandidateDecision {
+  shortlisted
+  unshortlisted
+  needs_review
+}
+
+enum DecisionSource {
+  auto
+  manual
+  knockout
+}
+
+enum EmailTemplateKind {
+  shortlisted
+  unshortlisted
+}
+
+enum EmailSendStatus {
+  queued
+  sent
+  failed
+  bounced
+}
+
+enum DeletionStatus {
+  pending
+  processing
+  completed
+  rejected
+}
+
+model Org {
+  id            String    @id @default(uuid())
+  name          String
+  retentionDays Int       @default(60) @map("retention_days")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profiles  Profile[]
+  batches   Batch[]
+  forms     Form[]
+  auditLogs AuditLog[]
+
+  @@map("orgs")
+}
+
+model Profile {
+  id        String    @id // auth user id
+  orgId     String?   @map("org_id")
+  role      UserRole  @default(candidate)
+  fullName  String?   @map("full_name")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  org            Org?            @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  candidateChecks CandidateCheck[]
+  emailAccounts  EmailAccount[]
+  batches        Batch[]         @relation("BatchOwner")
+  auditLogs      AuditLog[]      @relation("AuditActor")
+
+  @@index([orgId])
+  @@map("profiles")
+}
+
+model CandidateCheck {
+  id          String      @id @default(uuid())
+  userId      String?     @map("user_id")
+  anonToken   String?     @map("anon_token")
+  jobTitle    String      @map("job_title")
+  company     String?
+  jdText      String      @map("jd_text")
+  resumeText  String?     @map("resume_text")
+  resumePath  String?     @map("resume_path")
+  scoreBefore Int?        @map("score_before")
+  scoreAfter  Int?        @map("score_after")
+  breakdown   Json?
+  status      CheckStatus @default(pending)
+  expiresAt   DateTime?   @map("expires_at")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user        Profile?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  suggestions Suggestion[]
+
+  @@index([userId])
+  @@index([anonToken])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("candidate_checks")
+}
+
+model Suggestion {
+  id           String           @id @default(uuid())
+  checkId      String           @map("check_id")
+  section      String
+  originalText String           @map("original_text")
+  proposedText String           @map("proposed_text")
+  reason       String
+  impact       String?
+  status       SuggestionStatus @default(pending)
+  finalText    String?          @map("final_text")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  check        CandidateCheck   @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@index([checkId])
+  @@index([status])
+  @@map("suggestions")
+}
+
+model Batch {
+  id          String      @id @default(uuid())
+  orgId       String      @map("org_id")
+  ownerId     String      @map("owner_id")
+  name        String
+  jobTitle    String      @map("job_title")
+  jdText      String      @map("jd_text")
+  criteria    Json
+  cutoff      Int         @default(70)
+  status      BatchStatus @default(draft)
+  finalizedAt DateTime?   @map("finalized_at")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  org            Org             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  owner          Profile         @relation("BatchOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  forms          Form[]
+  candidates     Candidate[]
+  emailTemplates EmailTemplate[]
+  emailSends     EmailSend[]
+
+  @@index([orgId])
+  @@index([status])
+  @@map("batches")
+}
+
+model Form {
+  id            String   @id @default(uuid())
+  orgId         String   @map("org_id")
+  batchId       String   @map("batch_id")
+  slug          String   @unique
+  title         String
+  schema        Json
+  knockoutRules Json?    @map("knockout_rules")
+  isPublished   Boolean  @default(false) @map("is_published")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  org   Org   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([batchId])
+  @@map("forms")
+}
+
+model Candidate {
+  id              String             @id @default(uuid())
+  batchId         String             @map("batch_id")
+  source          CandidateSource    @default(upload)
+  fullName        String             @map("full_name")
+  email           String
+  phone           String?
+  resumePath      String?            @map("resume_path")
+  resumeText      String?            @map("resume_text")
+  formAnswers     Json?              @map("form_answers")
+  score           Int?
+  breakdown       Json?
+  criteriaResults Json?              @map("criteria_results")
+  aiSummary       String?            @map("ai_summary")
+  status          CandidateStatus    @default(pending)
+  decision        CandidateDecision?
+  decisionSource  DecisionSource?    @map("decision_source")
+  failureReason   String?            @map("failure_reason")
+  dedupeKey       String?            @map("dedupe_key")
+  consentAt       DateTime?          @map("consent_at")
+  expiresAt       DateTime?          @map("expires_at")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  batch      Batch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  emailSends EmailSend[]
+
+  @@index([batchId])
+  @@index([status])
+  @@index([decision])
+  @@index([score])
+  @@index([dedupeKey])
+  @@index([expiresAt])
+  @@map("candidates")
+}
+
+model EmailAccount {
+  id                    String   @id @default(uuid())
+  ownerId               String   @map("owner_id")
+  provider              String
+  address               String
+  encryptedRefreshToken String   @map("encrypted_refresh_token")
+  scopes                String
+  connectedAt           DateTime @default(now()) @map("connected_at")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  owner Profile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("email_accounts")
+}
+
+model EmailTemplate {
+  id        String            @id @default(uuid())
+  batchId   String            @map("batch_id")
+  kind      EmailTemplateKind
+  subject   String
+  body      String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@map("email_templates")
+}
+
+model EmailSend {
+  id          String          @id @default(uuid())
+  batchId     String          @map("batch_id")
+  candidateId String          @map("candidate_id")
+  status      EmailSendStatus @default(queued)
+  error       String?
+  sentAt      DateTime?       @map("sent_at")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  batch     Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, candidateId])
+  @@index([batchId])
+  @@index([candidateId])
+  @@index([status])
+  @@map("email_sends")
+}
+
+model DeletionRequest {
+  id         String         @id @default(uuid())
+  email      String         @map("email")
+  emailHash  String         @unique @map("email_hash")
+  codeHash   String         @map("code_hash")
+  status     DeletionStatus @default(pending)
+  expiresAt  DateTime       @map("expires_at")
+  verifiedAt DateTime?      @map("verified_at")
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([emailHash])
+  @@index([status])
+  @@map("deletion_requests")
+}
+
+model LlmCache {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  response  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@map("llm_caches")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  orgId     String   @map("org_id")
+  actorId   String   @map("actor_id")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  meta      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org   Org     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  actor Profile @relation("AuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}

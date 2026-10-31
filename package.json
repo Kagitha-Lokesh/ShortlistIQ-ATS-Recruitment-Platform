@@ -1,0 +1,31 @@
+{
+  "name": "shortlistiq",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -p \"[{name}]\" -n \"web,api\" -c \"cyan.bold,yellow.bold\" \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev --workspace=@shortlistiq/web",
+    "dev:api": "npm run dev --workspace=@shortlistiq/api",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "smoke-test": "tsx scripts/smoke-test.ts",
+    "start:api": "npm run start --workspace=@shortlistiq/api",
+    "start:worker": "npm run start:worker --workspace=@shortlistiq/api",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.39.5",
+    "prettier": "^3.5.3",
+    "typescript": "^5.7.3",
+    "vite": "^7.3.7",
+    "vitest": "^3.0.7"
+  }
+}
