@@ -42,3 +42,4 @@ export interface DecisionAudit {
   hrActionHistory: HrActionRecord[];
   isFinalDecision: boolean; // Always false until HR acts in UI
 }
+

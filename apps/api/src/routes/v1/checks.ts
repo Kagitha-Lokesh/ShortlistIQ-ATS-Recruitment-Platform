@@ -32,7 +32,8 @@ import {
   verifyGeneratedPdf,
   generateResumeLatexPdf,
   generateLatexSource,
-  compileLatexToPdf
+  compileLatexToPdf,
+  assertExportGrounded
 } from '../../services/export/index.js';
 import { verifyTurnstile } from '../../services/turnstile.js';
 
