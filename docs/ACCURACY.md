@@ -80,3 +80,4 @@ All test suites and TypeScript checks pass across the entire monorepo:
 | **Total** | **18 Suites** | **169 Tests** | **100% PASS** |
 
 - **Typecheck**: `npm run typecheck` passes with 0 errors across `@shortlistiq/engine`, `@shortlistiq/shared`, `@shortlistiq/api`, and `@shortlistiq/web`.
+
