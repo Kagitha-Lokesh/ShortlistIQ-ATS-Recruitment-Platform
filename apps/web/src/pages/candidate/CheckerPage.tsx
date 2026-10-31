@@ -14,6 +14,7 @@ import {
 import { checksApi, CandidateCheckData, ApiError } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { saveAtsCheck, getRecentAtsChecks, StoredAtsCheckSummary } from '../../lib/atsStorage';
 
 export const CheckerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,18 +29,33 @@ export const CheckerPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // User past checks history
-  const [pastChecks, setPastChecks] = useState<CandidateCheckData[]>([]);
+  // User past checks history (combines authenticated + localStorage)
+  const [pastChecks, setPastChecks] = useState<Array<CandidateCheckData | StoredAtsCheckSummary>>([]);
   const [isLoadingPast, setIsLoadingPast] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // 1. Initial load from localStorage (instant display for guests and members)
+    const localRecents = getRecentAtsChecks();
+    if (localRecents.length > 0) {
+      setPastChecks(localRecents);
+    }
+
+    // 2. If logged in, fetch server-stored checks and merge
     if (profile) {
       setIsLoadingPast(true);
       checksApi
         .getUserChecks()
-        .then((res) => setPastChecks(res.data))
+        .then((res) => {
+          // Merge deduplicating by ID
+          const map = new Map<string, CandidateCheckData | StoredAtsCheckSummary>();
+          for (const c of res.data) map.set(c.id, c);
+          for (const c of localRecents) {
+            if (!map.has(c.id)) map.set(c.id, c);
+          }
+          setPastChecks(Array.from(map.values()));
+        })
         .catch(() => {})
         .finally(() => setIsLoadingPast(false));
     }
@@ -101,6 +117,22 @@ export const CheckerPage: React.FC = () => {
       if (company.trim()) formData.append('company', company.trim());
 
       const res = await checksApi.createCheck(formData);
+
+      // Save complete check data to localStorage for instant recovery and offline caching
+      saveAtsCheck({
+        id: res.data.id,
+        createdAt: res.data.createdAt,
+        jobTitle: res.data.jobTitle,
+        company: res.data.company,
+        scoreBefore: res.data.scoreBefore,
+        scoreAfter: res.data.scoreAfter,
+        breakdown: res.data.breakdown,
+        resumeText: res.data.resumeText,
+        jdText: res.data.jdText || jdText,
+        candidateName: (res.data.breakdown as any)?.candidateName || 'Candidate',
+        suggestions: res.data.suggestions || []
+      });
+
       addToast('success', 'Resume analyzed successfully!');
       navigate(`/checks/${res.data.id}`);
     } catch (err) {
@@ -287,15 +319,15 @@ export const CheckerPage: React.FC = () => {
         </div>
       </form>
 
-      {/* Authenticated Past Checks History */}
-      {profile && (
+      {/* Recent Resume Checks History (from LocalStorage and Account) */}
+      {(pastChecks.length > 0 || profile) && (
         <div className="mt-12">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-4 h-4 text-slate-secondary" />
             <h2 className="text-base font-semibold text-slate-primary">Your Recent Resume Checks</h2>
           </div>
 
-          {isLoadingPast ? (
+          {isLoadingPast && pastChecks.length === 0 ? (
             <div className="p-6 bg-card border border-slate-border rounded-lg text-center text-xs text-slate-secondary">
               Loading your previous analyses...
             </div>
@@ -321,14 +353,14 @@ export const CheckerPage: React.FC = () => {
                   <div className="text-right">
                     <span
                       className={`inline-block px-2.5 py-0.5 text-xs font-bold rounded-full ${
-                        check.scoreBefore >= 75
+                        (check.scoreBefore ?? 0) >= 75
                           ? 'bg-emerald-50 text-state-success border border-emerald-200'
-                          : check.scoreBefore >= 50
+                          : (check.scoreBefore ?? 0) >= 50
                           ? 'bg-amber-50 text-state-warning border border-amber-200'
                           : 'bg-red-50 text-state-danger border border-red-200'
                       }`}
                     >
-                      {check.scoreBefore}/100
+                      {check.scoreBefore ?? 0}/100
                     </span>
                     <p className="text-[10px] text-slate-muted mt-1">View Results</p>
                   </div>

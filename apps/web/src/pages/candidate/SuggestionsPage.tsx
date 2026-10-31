@@ -18,6 +18,7 @@ import { scoreResume } from '@shortlistiq/engine';
 import { checksApi, CandidateCheckData, SuggestionItem, ApiError } from '../../lib/api';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useToast } from '../../context/ToastContext';
+import { getAtsCheck, updateAtsCheck } from '../../lib/atsStorage';
 
 export const SuggestionsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,18 +36,36 @@ export const SuggestionsPage: React.FC = () => {
   // Load candidate check
   useEffect(() => {
     if (!id) return;
-    setIsLoadingCheck(true);
+
+    // Check localStorage first
+    const cached = getAtsCheck(id);
+    if (cached) {
+      setCheck(cached as any);
+      if (cached.suggestions && cached.suggestions.length > 0) {
+        setSuggestions(cached.suggestions);
+      }
+      setIsLoadingCheck(false);
+    } else {
+      setIsLoadingCheck(true);
+    }
+
     checksApi
       .getCheck(id)
       .then((res) => {
         setCheck(res.data);
+        updateAtsCheck(id, res.data);
         if (res.data.suggestions && res.data.suggestions.length > 0) {
           setSuggestions(res.data.suggestions);
-        } else {
+          updateAtsCheck(id, { suggestions: res.data.suggestions });
+        } else if (!cached?.suggestions?.length) {
           loadSuggestions(id);
         }
       })
-      .catch((err) => setAiError(err.message || 'Failed to load candidate check.'))
+      .catch((err) => {
+        if (!cached) {
+          setAiError(err.message || 'Failed to load candidate check.');
+        }
+      })
       .finally(() => setIsLoadingCheck(false));
   }, [id]);
 
@@ -57,6 +76,7 @@ export const SuggestionsPage: React.FC = () => {
       .getSuggestions(checkId)
       .then((res) => {
         setSuggestions(res.data);
+        updateAtsCheck(checkId, { suggestions: res.data });
       })
       .catch((err) => {
         if (err instanceof ApiError) {
@@ -115,6 +135,7 @@ export const SuggestionsPage: React.FC = () => {
     });
     setSuggestions(nextSuggestions);
     setEditingId(null);
+    updateAtsCheck(id, { suggestions: nextSuggestions });
 
     // Compute updated projected score for database sync
     let simulatedText = check?.resumeText || '';
@@ -127,6 +148,7 @@ export const SuggestionsPage: React.FC = () => {
       }
     }
     const newScore = check?.jdText ? scoreResume(simulatedText, check.jdText).overallScore : projectedScore;
+    updateAtsCheck(id, { scoreAfter: newScore });
 
     try {
       await checksApi.updateSuggestion(id, suggestionId, {

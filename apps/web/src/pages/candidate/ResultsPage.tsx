@@ -16,6 +16,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { checksApi, CandidateCheckData } from '../../lib/api';
+import { getAtsCheck, updateAtsCheck, removeAtsCheck } from '../../lib/atsStorage';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../context/AuthContext';
 
@@ -35,6 +36,7 @@ export const ResultsPage: React.FC = () => {
     }
     try {
       setIsDeleting(true);
+      removeAtsCheck(id);
       await checksApi.deleteCheck(id);
       navigate('/checker');
     } catch (err: any) {
@@ -46,11 +48,27 @@ export const ResultsPage: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    setIsLoading(true);
+
+    // Check localStorage first for instant display
+    const cached = getAtsCheck(id);
+    if (cached) {
+      setCheck(cached as any);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
     checksApi
       .getCheck(id)
-      .then((res) => setCheck(res.data))
-      .catch((err) => setError(err.message || 'Failed to load resume check results.'))
+      .then((res) => {
+        setCheck(res.data);
+        updateAtsCheck(id, res.data);
+      })
+      .catch((err) => {
+        if (!cached) {
+          setError(err.message || 'Failed to load resume check results.');
+        }
+      })
       .finally(() => setIsLoading(false));
   }, [id]);
 

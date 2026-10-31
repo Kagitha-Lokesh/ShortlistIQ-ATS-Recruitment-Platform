@@ -127,9 +127,10 @@ async function callLlmWithFallback(
   userPrompt: string
 ): Promise<string> {
   const groqKey = env.GROQ_API_KEY;
+  const geminiKey = env.GEMINI_API_KEY;
   const openRouterKey = env.OPENROUTER_API_KEY;
 
-  if (env.NODE_ENV === 'test' || (!groqKey && !openRouterKey)) {
+  if (env.NODE_ENV === 'test' || (!groqKey && !geminiKey && !openRouterKey)) {
     return simulateOfflineResponse(systemPrompt, userPrompt);
   }
 
@@ -153,6 +154,22 @@ async function callLlmWithFallback(
             'Groq model failed. Falling back to next model.'
           );
         }
+      }
+    }
+
+    // 2. Fallback to Google Gemini (low token consumption model: gemini-3.5-flash-lite)
+    if (geminiKey && !geminiKey.includes('[YOUR-')) {
+      try {
+        const responseText = await callGeminiWithRetry(geminiKey, systemPrompt, userPrompt);
+        if (responseText) {
+          return responseText;
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        logger.warn(
+          { model: 'gemini-3.5-flash-lite', error: lastError.message },
+          'Gemini model failed. Falling back to next provider.'
+        );
       }
     }
 
@@ -248,6 +265,63 @@ async function callGroqWithRetry(
   }
 
   throw new Error(`Failed Groq model ${model} after retries`);
+}
+
+/**
+ * Calls Google Gemini REST API using the ultra-low token model gemini-3.5-flash-lite
+ */
+async function callGeminiWithRetry(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  model = 'gemini-3.5-flash-lite',
+  maxRetries = 2
+): Promise<string> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  let delayMs = 1000;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          },
+          contents: [
+            { parts: [{ text: userPrompt }] }
+          ],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.1
+          }
+        }),
+        signal: AbortSignal.timeout(25_000)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Gemini HTTP ${res.status}: ${errText}`);
+      }
+
+      const json = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const content = json.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!content) {
+        throw new Error('Empty response from Gemini model');
+      }
+
+      return content;
+    } catch (err) {
+      if (attempt >= maxRetries) throw err;
+      await new Promise((r) => setTimeout(r, delayMs));
+      delayMs *= 2;
+    }
+  }
+
+  throw new Error(`Failed Gemini model ${model} after retries`);
 }
 
 async function callModelWithRetry(
