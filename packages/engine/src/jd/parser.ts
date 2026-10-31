@@ -240,3 +240,4 @@ export function parseJobDescription(jdText: string, jobTitleOverride?: string): 
     isConfirmedByHr: false
   };
 }
+

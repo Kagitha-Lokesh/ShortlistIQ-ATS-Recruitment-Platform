@@ -54,3 +54,4 @@ export interface JobRequirements {
   version: number;
   isConfirmedByHr?: boolean;
 }
+

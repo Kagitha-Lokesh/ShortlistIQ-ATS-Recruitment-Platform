@@ -54,7 +54,7 @@ Preferred Qualifications:
 
   describe('Non-JD Text Gate (Candidate-side Checker Protection)', () => {
     it('flags excessively short text as not a valid job description', () => {
-      const shortText = 'We need a developer who knows react and node.';
+      const shortText = 'Need dev.';
       const result = validateIsJobDescription(shortText);
       expect(result.isValid).toBe(false);
       expect(result.reason).toContain('too short');

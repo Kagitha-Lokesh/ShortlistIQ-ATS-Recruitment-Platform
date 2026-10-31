@@ -42,16 +42,16 @@ const NON_JD_INDICATORS = [
  */
 export function validateIsJobDescription(text: string): { isValid: boolean; reason?: string } {
   const clean = text.trim();
-  if (clean.length < 120) {
+  if (clean.length < 40) {
     return {
       isValid: false,
-      reason: 'The provided text is too short to be a job description (minimum 120 characters required).'
+      reason: 'The provided text is too short to be a job description (minimum 40 characters required).'
     };
   }
 
   // Check if text looks like a resume or code snippet instead of a job description
   for (const indicator of NON_JD_INDICATORS) {
-    if (indicator.test(clean) && !/\b(requirements|qualifications|responsibilities|looking\s+for|we\s+are\s+hiring)\b/i.test(clean)) {
+    if (indicator.test(clean) && !/\b(requirements|qualifications|responsibilities|looking\s+for|we\s+are\s+hiring|we\s+seek)\b/i.test(clean)) {
       return {
         isValid: false,
         reason: 'The text appears to be a resume or code snippet rather than a job description.'
@@ -61,13 +61,13 @@ export function validateIsJobDescription(text: string): { isValid: boolean; reas
 
   // Check for typical JD intent signals
   const jdKeywords = [
-    /\b(responsibilities|qualifications|requirements|job\s+summary|role\s+overview)\b/i,
-    /\b(looking\s+for|seeking|we\s+offer|candidate\s+should|must\s+have)\b/i,
-    /\b(experience\s+with|proficient\s+in|familiarity\s+with|years\s+of\s+experience)\b/i
+    /\b(responsibilities|qualifications|requirements|job\s+summary|role\s+overview|job\s+description)\b/i,
+    /\b(looking\s+for|seeking|we\s+offer|candidate\s+should|must\s+have|we\s+are\s+hiring|position\s+overview)\b/i,
+    /\b(experience\s+with|proficient\s+in|familiarity\s+with|years\s+of\s+experience|required\s+skills)\b/i
   ];
 
   const matchedSignals = jdKeywords.filter((re) => re.test(clean)).length;
-  if (matchedSignals === 0 && clean.length < 300) {
+  if (matchedSignals === 0 && clean.length < 200) {
     return {
       isValid: false,
       reason: 'The text lacks standard job description components (qualifications, responsibilities, or role requirements).'
