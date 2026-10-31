@@ -10,9 +10,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Save,
-  Loader2,
   FileText
 } from 'lucide-react';
+import { Button } from '../../components/ui/Button.js';
+import { Badge } from '../../components/ui/Badge.js';
 
 export const CreateBatchPage: React.FC = () => {
   const navigate = useNavigate();
@@ -79,7 +80,6 @@ export const CreateBatchPage: React.FC = () => {
     }
     setErrorMsg(null);
     try {
-      // Ensure batch row exists in database so step 3 can upload directly
       if (!batchId) {
         await persistBatch('draft');
       }
@@ -101,7 +101,6 @@ export const CreateBatchPage: React.FC = () => {
     }
   };
 
-  // Helper to handle JD text file upload
   const handleJdFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -109,73 +108,76 @@ export const CreateBatchPage: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
-      if (content) setJdText(content);
+      if (content) {
+        setJdText(content);
+      }
     };
     reader.readAsText(file);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Top Breadcrumb & Actions */}
-      <div className="flex items-center justify-between border-b border-slate-border pb-4">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Header */}
+      <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-primary">Create Recruitment Batch</h1>
-          <p className="text-xs text-slate-secondary mt-0.5">
-            Configure job specifications and bulk upload candidate resumes for deterministic ranking
+          <h1 className="text-xl font-bold text-ink-primary">Create Screening Batch</h1>
+          <p className="text-xs text-ink-secondary mt-0.5">
+            Configure job specifications and bulk upload candidate resumes for transparent scoring
           </p>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
+          isLoading={isSavingDraft}
+          disabled={!name || !jobTitle}
+          leftIcon={<Save className="w-3.5 h-3.5" />}
           onClick={handleSaveDraft}
-          disabled={isSavingDraft || !name || !jobTitle}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-slate-primary bg-white border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors shadow-sm"
         >
-          {isSavingDraft ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Save Draft
-        </button>
+        </Button>
       </div>
 
       {/* Stepper Progress */}
-      <div className="grid grid-cols-4 gap-3 text-center">
+      <div className="grid grid-cols-4 gap-2.5 text-center">
         {[
-          { step: 1, label: '1. Job Details', icon: Briefcase },
-          { step: 2, label: '2. Scoring Criteria', icon: Sliders },
+          { step: 1, label: '1. Role Details', icon: Briefcase },
+          { step: 2, label: '2. Cutoff & Criteria', icon: Sliders },
           { step: 3, label: '3. Add Candidates', icon: Users },
           { step: 4, label: '4. Review & Launch', icon: CheckCircle2 }
         ].map(({ step, label, icon: Icon }) => (
           <div
             key={step}
-            className={`p-3 rounded-lg border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
+            className={`p-2.5 rounded-md border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
               currentStep === step
-                ? 'border-brand-indigo bg-indigo-50/60 text-brand-indigo shadow-sm'
+                ? 'border-primary bg-slate-100 text-ink-primary font-semibold'
                 : currentStep > step
-                ? 'border-emerald-200 bg-emerald-50/50 text-state-success'
-                : 'border-slate-200 bg-white text-slate-400'
+                ? 'border-emerald-200 bg-emerald-50 text-state-success'
+                : 'border-border bg-surface text-ink-muted'
             }`}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{label}</span>
           </div>
         ))}
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 text-state-danger rounded text-xs">
+        <div className="p-3 bg-red-50 border border-red-200 text-state-danger rounded-md text-xs">
           {errorMsg}
         </div>
       )}
 
       {/* Step 1: Job Details */}
       {currentStep === 1 && (
-        <div className="bg-white border border-slate-border rounded-lg p-6 space-y-5 shadow-soft">
-          <h2 className="text-sm font-semibold text-slate-primary border-b border-slate-border pb-3">
-            Step 1: Job Information
+        <div className="bg-surface border border-border rounded-md p-6 space-y-5 shadow-subtle">
+          <h2 className="text-sm font-semibold text-ink-primary border-b border-border pb-3">
+            Step 1: Role Specifications
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-primary mb-1">
+              <label className="block text-xs font-semibold text-ink-primary mb-1">
                 Batch Campaign Name *
               </label>
               <input
@@ -183,32 +185,32 @@ export const CreateBatchPage: React.FC = () => {
                 placeholder="e.g. Q4 Senior Backend Engineers"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none"
+                className="w-full text-xs px-3 py-2 border border-border rounded focus:border-primary focus:outline-none bg-surface"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-primary mb-1">
-                Job Title *
+              <label className="block text-xs font-semibold text-ink-primary mb-1">
+                Target Job Title *
               </label>
               <input
                 type="text"
                 placeholder="e.g. Senior Backend Engineer"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none"
+                className="w-full text-xs px-3 py-2 border border-border rounded focus:border-primary focus:outline-none bg-surface"
               />
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-slate-primary">
-                Job Description *
+              <label className="block text-xs font-semibold text-ink-primary">
+                Job Description & Requirements *
               </label>
-              <label className="text-[11px] text-brand-indigo hover:underline cursor-pointer flex items-center gap-1">
+              <label className="text-[11px] text-brand-accent hover:underline cursor-pointer flex items-center gap-1 font-medium">
                 <FileText className="w-3 h-3" />
-                Upload JD Text File
+                Upload Text File (.txt)
                 <input
                   type="file"
                   accept=".txt"
@@ -219,46 +221,45 @@ export const CreateBatchPage: React.FC = () => {
             </div>
             <textarea
               rows={8}
-              placeholder="Paste the full job description, required skills, responsibilities, and qualification expectations..."
+              placeholder="Paste the full job description text: responsibilities, must-have skills, preferred experience..."
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
-              className="w-full text-xs p-3 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none font-mono leading-relaxed"
+              className="w-full text-xs p-3 border border-border rounded focus:border-primary focus:outline-none font-mono leading-relaxed bg-surface"
             />
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-slate-border">
-            <button
-              type="button"
+          <div className="flex justify-end pt-4 border-t border-border">
+            <Button
+              variant="primary"
+              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               onClick={handleNextFromStep1}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-sm"
             >
               Continue to Criteria
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Step 2: Scoring Criteria */}
       {currentStep === 2 && (
-        <div className="bg-white border border-slate-border rounded-lg p-6 space-y-6 shadow-soft">
-          <h2 className="text-sm font-semibold text-slate-primary border-b border-slate-border pb-3">
-            Step 2: Qualification Cutoff & Criteria
+        <div className="bg-surface border border-border rounded-md p-6 space-y-6 shadow-subtle">
+          <h2 className="text-sm font-semibold text-ink-primary border-b border-border pb-3">
+            Step 2: Qualification Cutoff & Match Logic
           </h2>
 
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-primary">
-                  Qualification Cutoff Score
+                <label className="text-xs font-semibold text-ink-primary">
+                  Qualification Cutoff Benchmark
                 </label>
-                <span className="text-sm font-bold text-brand-indigo px-2.5 py-0.5 rounded bg-indigo-50">
+                <span className="text-sm font-bold text-ink-primary px-2.5 py-0.5 rounded bg-surface-subtle border border-border tabular-nums">
                   {cutoff}%
                 </span>
               </div>
-              <p className="text-[11px] text-slate-secondary mb-3">
-                Candidates scoring above this threshold will automatically receive a <strong>Shortlisted</strong> decision.
-                Scores within 5 points will be flagged as <strong>Needs Review</strong>.
+              <p className="text-[11px] text-ink-secondary mb-3">
+                Candidates scoring at or above this threshold receive a <strong>Shortlisted</strong> recommendation.
+                Borderline candidates (within 5 points) are marked for <strong>Needs Review</strong>.
               </p>
               <input
                 type="range"
@@ -266,60 +267,57 @@ export const CreateBatchPage: React.FC = () => {
                 max={95}
                 value={cutoff}
                 onChange={(e) => setCutoff(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-indigo"
+                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
               />
-              <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+              <div className="flex justify-between text-[10px] text-ink-muted mt-1 tabular-nums">
                 <span>40% (Lenient)</span>
                 <span>70% (Standard)</span>
                 <span>95% (Strict)</span>
               </div>
             </div>
 
-            {/* Criteria placeholder banner for Phase 7 */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
-              <div className="flex items-center gap-2 text-slate-primary font-semibold text-xs">
-                <Sliders className="w-4 h-4 text-brand-indigo" />
-                Deterministic ATS Evaluation Engine Active
+            <div className="bg-surface-subtle border border-border rounded p-4 space-y-1.5">
+              <div className="flex items-center gap-2 text-ink-primary font-semibold text-xs">
+                <Sliders className="w-4 h-4 text-primary" />
+                Deterministic Scoring & Verbatim Evidence
               </div>
-              <p className="text-xs text-slate-secondary leading-relaxed">
-                The local engine extracts tech skills, experience duration, and keyword TF-IDF frequencies directly from the job description text.
-                Advanced must-have, nice-to-have, and dealbreaker custom rules can be configured in <strong>Phase 7 (Criteria Builder)</strong>.
+              <p className="text-xs text-ink-secondary leading-relaxed">
+                The engine evaluates requirements by grounding matches against verifiable resume snippets.
+                Dealbreaker rules, knockout criteria, and customized must-have weights can be managed from the batch criteria drawer.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-border">
-            <button
-              type="button"
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
               onClick={() => setCurrentStep(1)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-slate-primary bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
               Back
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               onClick={() => setCurrentStep(3)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-sm"
             >
               Continue to Resumes Upload
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Step 3: Add Candidates / Bulk Upload */}
       {currentStep === 3 && (
-        <div className="bg-white border border-slate-border rounded-lg p-6 space-y-6 shadow-soft">
-          <div className="border-b border-slate-border pb-3 flex items-center justify-between">
+        <div className="bg-surface border border-border rounded-md p-6 space-y-6 shadow-subtle">
+          <div className="border-b border-border pb-3 flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-primary">
+              <h2 className="text-sm font-semibold text-ink-primary">
                 Step 3: Bulk Upload Candidate Resumes
               </h2>
-              <p className="text-xs text-slate-secondary mt-0.5">
-                Upload up to 500+ text-based PDF resumes. Files are uploaded in chunks with concurrency 3.
+              <p className="text-xs text-ink-secondary mt-0.5">
+                Upload candidate PDF resumes. Engine parses text, reconstructs reading order, and evaluates match criteria.
               </p>
             </div>
           </div>
@@ -330,98 +328,84 @@ export const CreateBatchPage: React.FC = () => {
             onFilesSelected={(files) => setSelectedFiles((prev) => [...prev, ...files])}
           />
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-border">
-            <button
-              type="button"
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
               onClick={() => setCurrentStep(2)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-slate-primary bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
               Back
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               onClick={() => setCurrentStep(4)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-sm"
             >
               Review & Finalize
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Step 4: Review and Finalize */}
       {currentStep === 4 && (
-        <div className="bg-white border border-slate-border rounded-lg p-6 space-y-6 shadow-soft">
-          <h2 className="text-sm font-semibold text-slate-primary border-b border-slate-border pb-3">
+        <div className="bg-surface border border-border rounded-md p-6 space-y-6 shadow-subtle">
+          <h2 className="text-sm font-semibold text-ink-primary border-b border-border pb-3">
             Step 4: Review Batch Specifications
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="p-4 bg-slate-50 rounded border border-slate-200 space-y-2">
-              <span className="text-slate-400 font-medium block">Job Details</span>
-              <div className="text-sm font-bold text-slate-primary">{name}</div>
-              <div className="text-slate-primary">{jobTitle}</div>
+            <div className="p-4 bg-surface-subtle rounded border border-border space-y-2">
+              <span className="text-ink-muted font-medium block">Job Details</span>
+              <div className="text-sm font-bold text-ink-primary">{name}</div>
+              <div className="text-ink-secondary">{jobTitle}</div>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded border border-slate-200 space-y-2">
-              <span className="text-slate-400 font-medium block">Scoring & Candidates</span>
+            <div className="p-4 bg-surface-subtle rounded border border-border space-y-2">
+              <span className="text-ink-muted font-medium block">Scoring & Candidates</span>
               <div className="flex items-center justify-between">
-                <span className="text-slate-secondary">Cutoff Threshold:</span>
-                <span className="font-bold text-brand-indigo">{cutoff}%</span>
+                <span className="text-ink-secondary">Cutoff Threshold:</span>
+                <span className="font-bold text-ink-primary tabular-nums">{cutoff}%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-secondary">Resumes Uploaded:</span>
-                <span className="font-bold text-slate-primary">{selectedFiles.length} files</span>
+                <span className="text-ink-secondary">Resumes Uploaded:</span>
+                <span className="font-bold text-ink-primary tabular-nums">{selectedFiles.length} files</span>
               </div>
             </div>
           </div>
 
-          <div className="p-4 bg-amber-50/60 border border-amber-200 rounded text-xs text-amber-800 leading-relaxed">
-            <strong>Ready to launch:</strong> Activating this batch will trigger background parsing and scoring across all candidate resumes.
-            You can close the tab or refresh at any time—processing runs continuously on the server worker.
+          <div className="p-4 bg-amber-50/70 border border-amber-200 rounded text-xs text-amber-900 leading-relaxed">
+            <strong>Ready to launch:</strong> Activating this batch triggers background text reconstruction and evaluation across all resumes.
+            Processing runs continuously on the server worker without requiring the browser tab to remain open.
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-border">
-            <button
-              type="button"
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
               onClick={() => setCurrentStep(3)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-slate-primary bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
               Back
-            </button>
+            </Button>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                isLoading={isSavingDraft}
                 onClick={handleSaveDraft}
-                disabled={isSavingDraft}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-slate-primary bg-white border border-slate-300 hover:bg-slate-50 transition-colors shadow-sm"
               >
                 Save as Draft
-              </button>
+              </Button>
 
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                isLoading={isSubmitting}
+                leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
                 onClick={handleFinalizeBatch}
-                disabled={isSubmitting}
-                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-sm"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Launching Batch...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Activate Batch & Process
-                  </>
-                )}
-              </button>
+                Activate Batch & Process
+              </Button>
             </div>
           </div>
         </div>
@@ -429,4 +413,3 @@ export const CreateBatchPage: React.FC = () => {
     </div>
   );
 };
-

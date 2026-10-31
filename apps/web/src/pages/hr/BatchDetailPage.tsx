@@ -39,6 +39,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { CardSkeleton } from '../../components/ui/Skeleton.js';
+import { Button } from '../../components/ui/Button.js';
+import { Badge } from '../../components/ui/Badge.js';
 
 export const BatchDetailPage: React.FC = () => {
   const { id: batchId } = useParams<{ id: string }>();
@@ -321,99 +323,105 @@ export const BatchDetailPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap self-start sm:self-auto">
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
           {/* Email Accounts Button */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Mail className="w-3.5 h-3.5 text-ink-muted" />}
             onClick={() => setShowEmailSettingsModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors shadow-xs"
             title="Configure Gmail or Outlook OAuth"
           >
-            <Mail className="w-3.5 h-3.5 text-slate-500" />
             Email Accounts
-          </button>
+          </Button>
 
           {/* Email Templates Button */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<FileCode className="w-3.5 h-3.5 text-ink-muted" />}
             onClick={() => setShowTemplatesModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors shadow-xs"
           >
-            <FileCode className="w-3.5 h-3.5 text-brand-indigo" />
             Templates
-          </button>
+          </Button>
 
           {/* Application Forms Button */}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<FileText className="w-3.5 h-3.5 text-ink-muted" />}
             onClick={() => setShowFormsModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors shadow-xs"
           >
-            <FileText className="w-3.5 h-3.5 text-brand-indigo" />
             Forms
-          </button>
+          </Button>
 
           {/* Configure Criteria Button */}
-          <button
-            onClick={() => setShowCriteriaModal(true)}
+          <Button
+            variant="outline"
+            size="sm"
             disabled={isBatchFinalized}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded transition-colors shadow-xs ${
-              isBatchFinalized
-                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-                : 'text-brand-indigo bg-indigo-50 border border-indigo-200 hover:bg-indigo-100'
-            }`}
+            leftIcon={<Sliders className="w-3.5 h-3.5" />}
+            onClick={() => setShowCriteriaModal(true)}
             title={isBatchFinalized ? 'Criteria locked because batch is finalized' : 'Configure Criteria'}
           >
-            <Sliders className="w-3.5 h-3.5" />
             Criteria
-          </button>
+          </Button>
 
           {/* Export CSV Button */}
-          <button
-            onClick={handleExportCsv}
+          <Button
+            variant="outline"
+            size="sm"
             disabled={isExportingCsv || candidates.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors shadow-xs disabled:opacity-50"
+            isLoading={isExportingCsv}
+            leftIcon={<Download className="w-3.5 h-3.5" />}
+            onClick={handleExportCsv}
             title="Export candidates to CSV"
           >
-            <Download className="w-3.5 h-3.5" />
-            {isExportingCsv ? 'Exporting...' : 'Export CSV'}
-          </button>
+            Export CSV
+          </Button>
 
           {/* Delete Batch Button */}
-          <button
+          <Button
+            variant="danger"
+            size="sm"
+            leftIcon={<Trash2 className="w-3.5 h-3.5 text-state-danger" />}
             onClick={() => setShowDeleteBatchModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded text-state-danger bg-red-50 hover:bg-red-100 border border-red-200 transition-colors shadow-xs"
             title="Permanently delete batch and candidate files"
           >
-            <Trash2 className="w-3.5 h-3.5" />
             Delete Batch
-          </button>
+          </Button>
 
           {/* Add Resumes Button */}
           {!isBatchFinalized && (
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
               onClick={() => setShowUploadModal(!showUploadModal)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-xs"
             >
-              <Plus className="w-3.5 h-3.5" />
               Add Resumes
-            </button>
+            </Button>
           )}
 
           {/* Finalize / Delivery Button */}
           {isBatchFinalized ? (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Lock className="w-3.5 h-3.5 text-amber-600" />}
               onClick={() => setMainView('delivery')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-amber-900 bg-amber-100 border border-amber-300 hover:bg-amber-200 transition-colors shadow-xs"
             >
-              <Lock className="w-3.5 h-3.5" />
               Finalized (View Emails)
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Send className="w-3.5 h-3.5" />}
               onClick={() => setShowFinalizeModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs"
             >
-              <Send className="w-3.5 h-3.5" />
               Finalize & Send Emails
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -587,24 +595,24 @@ export const BatchDetailPage: React.FC = () => {
 
         {/* 4 Stat Breakdown Bars */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded">
-            <div className="text-lg font-bold text-slate-primary">{counts.total}</div>
-            <div className="text-[11px] text-slate-secondary">Total Candidates</div>
+          <div className="p-3 bg-surface-subtle border border-border rounded-md">
+            <div className="text-xl font-bold text-ink-primary tabular-nums tracking-tight">{counts.total}</div>
+            <div className="text-[11px] text-ink-secondary mt-0.5">Total Candidates</div>
           </div>
 
-          <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded">
-            <div className="text-lg font-bold text-state-success">{counts.shortlisted}</div>
-            <div className="text-[11px] text-state-success">Shortlisted (≥{batch.cutoff}%)</div>
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+            <div className="text-xl font-bold text-emerald-800 tabular-nums tracking-tight">{counts.shortlisted}</div>
+            <div className="text-[11px] text-emerald-700 mt-0.5 font-medium">Shortlisted (≥{batch.cutoff}%)</div>
           </div>
 
-          <div className="p-3 bg-amber-50/70 border border-amber-200 rounded">
-            <div className="text-lg font-bold text-state-warning">{counts.needsReview}</div>
-            <div className="text-[11px] text-state-warning">Needs Review (Borderline)</div>
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <div className="text-xl font-bold text-amber-800 tabular-nums tracking-tight">{counts.needsReview}</div>
+            <div className="text-[11px] text-amber-700 mt-0.5 font-medium">Needs Review (Borderline)</div>
           </div>
 
-          <div className="p-3 bg-red-50/70 border border-red-200 rounded">
-            <div className="text-lg font-bold text-state-danger">{counts.failed}</div>
-            <div className="text-[11px] text-state-danger">Failed to Parse</div>
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+            <div className="text-xl font-bold text-red-800 tabular-nums tracking-tight">{counts.failed}</div>
+            <div className="text-[11px] text-red-700 mt-0.5 font-medium">Unreadable / Ingest Failure</div>
           </div>
         </div>
       </div>
@@ -927,28 +935,22 @@ export const BatchDetailPage: React.FC = () => {
 
                       {/* Decision & Override Indicator */}
                       <td className="py-3.5 px-4 text-center">
-                        <div className="flex flex-col items-center gap-0.5">
+                        <div className="flex flex-col items-center gap-1">
                           {candidate.decision === 'shortlisted' && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-state-success border border-emerald-200">
-                              Shortlisted
-                            </span>
+                            <Badge variant="shortlisted" size="sm">Shortlisted</Badge>
                           )}
                           {candidate.decision === 'needs_review' && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-state-warning border border-amber-200">
-                              Needs Review
-                            </span>
+                            <Badge variant="needs_review" size="sm">Needs Review</Badge>
                           )}
                           {candidate.decision === 'unshortlisted' && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                              Unshortlisted
-                            </span>
+                            <Badge variant="unshortlisted" size="sm">Unshortlisted</Badge>
                           )}
                           {!candidate.decision && (
                             <span className="text-slate-400 text-[11px]">—</span>
                           )}
 
                           {candidate.decisionSource === 'manual' && (
-                            <span className="text-[9px] text-brand-indigo font-medium flex items-center gap-0.5">
+                            <span className="text-[9px] text-primary font-medium flex items-center gap-0.5">
                               <UserCheck className="w-2.5 h-2.5" />
                               Manual Override
                             </span>
