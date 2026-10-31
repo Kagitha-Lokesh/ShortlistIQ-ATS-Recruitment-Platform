@@ -184,9 +184,10 @@ export function generateLatexSource(resume: ResumeData, options: LatexOptions = 
   // ── Section 2: Education ─────────────────────────────────────────────────────
   let educationBlock = '';
   if (resume.education && resume.education.length > 0) {
-    // Deduplicate and consolidate any fragmented parser lines
-    const isGenericInst = (s: string) => /^(University|College|University\s*\/\s*College|School|Institution)$/i.test(s.trim());
-    const isLocationOnly = (s: string) => /^(Andhra Pradesh|Telangana|Karnataka|Maharashtra|Tamil Nadu|India|California|CA|NY|TX|USA|[A-Z][a-z]+,\s*[A-Z][a-z]+)$/i.test(s.trim());
+    const isGenericInst = (s: string) => !s || /^(University|College|University\s*\/\s*College|School|Institution)$/i.test(s.trim());
+    const isLocationOnly = (s: string) => /^(Andhra Pradesh|Telangana|Karnataka|Maharashtra|Tamil Nadu|Delhi|India|USA|California|CA|NY|TX|[A-Z][a-z]+,\s*[A-Z][a-z]+)$/i.test(s.trim());
+    const hasDegreeKeyword = (s: string) => /(Intermediate|Secondary|High School|B\.?\s*Tech|B\.?\s*E|B\.?\s*Sc|BCA|BBA|M\.?\s*Tech|M\.?\s*Sc|MCA|MBA|Bachelor|Master|Diploma|Ph\.?D)/i.test(s);
+    const hasInstKeyword = (s: string) => /(Institute|University|College|School|Academy|Polytechnic|Vidyalaya|Campus)/i.test(s);
 
     const normalizedEducation: Array<{
       institution: string;
@@ -196,64 +197,81 @@ export function generateLatexSource(resume: ResumeData, options: LatexOptions = 
       gpaStr: string;
     }> = [];
 
-    let pendingEdu: {
-      institution: string;
-      degree: string;
-      location: string;
-      dateStr: string;
-      gpaStr: string;
-    } | null = null;
+    let pendingDate = '';
 
     for (const edu of resume.education) {
       let inst = cleanEntityName(edu.institution);
       let deg = cleanEntityName(edu.degree);
-      const dateStr = formatDateRange(edu.startDate, edu.endDate);
-      const gpaStr = edu.gpa ? ` --- CGPA: ${esc(String(edu.gpa))}` : '';
       let loc = (edu.location || '').trim();
+      let dateStr = formatDateRange(edu.startDate, edu.endDate);
+      let gpa = edu.gpa ? String(edu.gpa) : '';
 
-      // If degree is just a lone state/location, attach to pending
-      if (isLocationOnly(deg) && pendingEdu) {
-        if (!pendingEdu.location) pendingEdu.location = deg;
+      if (!dateStr && pendingDate) {
+        dateStr = pendingDate;
+        pendingDate = '';
+      }
+
+      // Case 1: Entry is just a lone date or placeholder
+      if (isGenericInst(inst) && !deg && !loc) {
+        if (dateStr) pendingDate = dateStr;
         continue;
       }
 
-      // If institution is generic placeholder ("University") but degree actually contains the institution name
-      if (isGenericInst(inst) && /(Institute|College|University|School|Academy|Polytechnic|Vidyalaya)/i.test(deg)) {
+      // Case 2: Degree actually contains institution and institution is generic
+      if (isGenericInst(inst) && hasInstKeyword(deg) && !hasDegreeKeyword(deg)) {
         inst = deg;
         deg = '';
       }
 
-      // If this line is a degree description following an institution line
-      if (pendingEdu && isGenericInst(inst) && deg) {
-        if (!pendingEdu.degree) {
-          pendingEdu.degree = deg;
-          if (loc && !pendingEdu.location) pendingEdu.location = loc;
-          if (dateStr && !pendingEdu.dateStr) pendingEdu.dateStr = dateStr;
+      // Case 3: Degree is actually a location, and location contains the real degree
+      if (isLocationOnly(deg) && hasDegreeKeyword(loc)) {
+        const realDeg = loc;
+        loc = deg;
+        deg = realDeg;
+      } else if (isLocationOnly(deg) && !loc) {
+        loc = deg;
+        deg = '';
+      }
+
+      // Case 4: Location contains degree
+      if (!deg && hasDegreeKeyword(loc)) {
+        deg = loc;
+        loc = '';
+      }
+
+      // Extract GPA from degree or location if present
+      const gpaMatch = (deg + ' ' + loc).match(/(?:CGPA|GPA|Percentage)\s*:?\s*(\d+(?:\.\d+)?(?:\s*\/\s*\d+)?%?)/i);
+      if (gpaMatch && !gpa) {
+        gpa = gpaMatch[1];
+        deg = deg.replace(gpaMatch[0], '').replace(/[-–—|()]+$/, '').trim();
+        loc = loc.replace(gpaMatch[0], '').replace(/[-–—|()]+$/, '').trim();
+      }
+
+      const gpaStr = gpa ? ` --- CGPA: ${esc(gpa)}` : '';
+
+      if (isGenericInst(inst) && !deg && !loc && !dateStr) {
+        continue;
+      }
+
+      // Merge with previous entry if current entry is just degree/location for the previous institution
+      if (normalizedEducation.length > 0 && isGenericInst(inst)) {
+        const prev = normalizedEducation[normalizedEducation.length - 1];
+        if (!prev.degree && deg) {
+          prev.degree = deg;
+          if (loc && !prev.location) prev.location = loc;
+          if (dateStr && !prev.dateStr) prev.dateStr = dateStr;
+          if (gpaStr && !prev.gpaStr) prev.gpaStr = gpaStr;
           continue;
         }
       }
 
-      if (pendingEdu && !pendingEdu.degree && /(Education|School|Intermediate|B\.Tech|Degree|Bachelor|Master)/i.test(deg || inst)) {
-        pendingEdu.degree = deg || inst;
-        if (dateStr && !pendingEdu.dateStr) pendingEdu.dateStr = dateStr;
-        continue;
-      }
-
-      if (pendingEdu) {
-        normalizedEducation.push(pendingEdu);
-        pendingEdu = null;
-      }
-
-      pendingEdu = {
-        institution: isGenericInst(inst) && deg ? deg : (inst || 'University'),
+      normalizedEducation.push({
+        institution: isGenericInst(inst) ? (deg || 'University') : inst,
         degree: isGenericInst(inst) && deg ? '' : deg,
         location: loc,
         dateStr,
         gpaStr
-      };
-    }
-    if (pendingEdu) {
-      normalizedEducation.push(pendingEdu);
+      });
     }
 
     if (normalizedEducation.length > 0) {
