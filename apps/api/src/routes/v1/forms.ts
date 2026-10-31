@@ -215,8 +215,11 @@ formsRouter.post(
       const consentAt = new Date();
 
       if (knockoutResult.knockedOut) {
-        // Immediate Auto-Rejection (Knockout)
-        // Candidate remains visible to HR with decision: unshortlisted, decisionSource: knockout, failureReason: knockout reason
+        // High-Stakes Accuracy Upgrade: Under ENGINE_V2, candidates are NEVER auto-rejected.
+        // Instead, they are routed to needs_review with a knockout flag for HR confirmation.
+        const isEngineV2 = process.env.ENGINE_V2 === 'true';
+        const targetDecision = isEngineV2 ? CandidateDecision.needs_review : CandidateDecision.unshortlisted;
+
         const candidate = await candidateRepo.create({
           batchId: form.batchId,
           source: CandidateSource.form,
@@ -227,7 +230,7 @@ formsRouter.post(
           resumeText: parsedText,
           formAnswers: answers,
           status: CandidateStatus.scored,
-          decision: CandidateDecision.unshortlisted,
+          decision: targetDecision,
           decisionSource: DecisionSource.knockout,
           score: 0,
           failureReason: `Knockout: ${knockoutResult.reason}`,
@@ -238,14 +241,16 @@ formsRouter.post(
         const referenceNumber = `APP-${candidate.id.slice(0, 8).toUpperCase()}`;
 
         logger.info(
-          { candidateId: candidate.id, batchId: form.batchId, ruleId: knockoutResult.ruleId },
-          'Candidate auto-rejected via form knockout rule'
+          { candidateId: candidate.id, batchId: form.batchId, ruleId: knockoutResult.ruleId, decision: targetDecision },
+          isEngineV2
+            ? 'Candidate flagged for HR review via form knockout rule (no auto-rejection)'
+            : 'Candidate auto-rejected via form knockout rule'
         );
 
         return res.status(201).json({
           success: true,
           referenceNumber,
-          decision: 'unshortlisted',
+          decision: targetDecision,
           knockout: true,
           message: 'Your application has been received and recorded.'
         });

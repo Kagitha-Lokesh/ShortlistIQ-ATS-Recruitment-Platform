@@ -70,51 +70,100 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 flex items-center justify-center p-4">
+      <div className="bg-surface rounded-lg shadow-xl border border-border max-w-lg w-full overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-border flex items-center justify-between bg-slate-50">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface-subtle">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
-              <Lock className="w-4 h-4" />
+            <div className="w-8 h-8 rounded bg-surface border border-border flex items-center justify-center text-ink-primary">
+              <Lock className="w-4 h-4 text-brand" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-primary">Finalize Batch & Dispatch Emails</h2>
-              <p className="text-[11px] text-slate-secondary">{batchName}</p>
+              <h2 className="text-sm font-bold text-ink-primary">Finalize Batch & Enqueue Emails</h2>
+              <p className="text-[11px] text-ink-secondary truncate max-w-xs">{batchName}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1 rounded text-ink-muted hover:text-ink-primary hover:bg-surface transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body */}
         <div className="p-6 space-y-5">
           {errorMessage && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5 text-xs text-state-danger">
+            <div className="p-3 bg-red-50 border border-red-200 rounded flex items-start gap-2.5 text-xs text-state-danger">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>{errorMessage}</span>
+              <span className="font-medium">{errorMessage}</span>
             </div>
           )}
 
+          {/* Pre-Finalize Verification Checklist */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">
+              Pre-Finalize Checklist
+            </h4>
+            <div className="border border-border rounded divide-y divide-border bg-surface-subtle">
+              {/* Check 1: 0 Needs Review */}
+              <div className="p-2.5 px-3 flex items-center justify-between text-xs">
+                <span className="text-ink-secondary font-medium">1. All candidates reviewed (0 pending)</span>
+                {hasNeedsReview ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-state-danger bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                    <AlertCircle className="w-3 h-3" />
+                    {candidateCounts.needsReview} pending
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Resolved (0 pending)
+                  </span>
+                )}
+              </div>
+
+              {/* Check 2: Connected Sender */}
+              <div className="p-2.5 px-3 flex items-center justify-between text-xs">
+                <span className="text-ink-secondary font-medium">2. Connected email sender</span>
+                {connectedAccount ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {connectedAccount.provider.toUpperCase()}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-state-danger bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                    <AlertCircle className="w-3 h-3" />
+                    No account
+                  </span>
+                )}
+              </div>
+
+              {/* Check 3: Total Candidates with Decisions */}
+              <div className="p-2.5 px-3 flex items-center justify-between text-xs">
+                <span className="text-ink-secondary font-medium">3. Candidate notifications</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink-primary bg-surface px-2 py-0.5 rounded border border-border">
+                  <Mail className="w-3 h-3 text-brand" />
+                  {totalRecipients} recipients
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* CRITICAL GUARDRAIL: needs_review candidates exist */}
           {hasNeedsReview ? (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-2">
+            <div className="p-4 bg-red-50 border border-red-200 rounded space-y-2">
               <div className="flex items-center gap-2 text-xs font-bold text-state-danger">
                 <ShieldAlert className="w-4 h-4 text-state-danger" />
-                <span>Finalization Blocked: Pending Reviews</span>
+                <span>Finalization Blocked: Pending Reviews Required</span>
               </div>
               <p className="text-xs text-red-800 leading-relaxed">
-                There are still <strong>{candidateCounts.needsReview} candidate(s)</strong> awaiting review. All candidate decisions must be finalized as either <strong>Shortlisted</strong> or <strong>Unshortlisted</strong> before automated decision emails can be triggered.
+                There are still <strong>{candidateCounts.needsReview} candidate(s)</strong> awaiting review. All candidate decisions must be marked as either <strong>Shortlisted</strong> or <strong>Unshortlisted</strong> before automated decision emails can be triggered.
               </p>
               <div className="pt-1">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-3 py-1.5 text-xs font-semibold rounded bg-white border border-red-300 text-state-danger hover:bg-red-50 transition-colors"
+                  className="px-3 py-1.5 text-xs font-semibold rounded bg-surface border border-red-300 text-state-danger hover:bg-red-50 transition-colors shadow-2xs"
                 >
                   Return to Candidate Review
                 </button>
@@ -122,70 +171,72 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
             </div>
           ) : (
             <>
-              {/* Decision Breakdown Summary */}
+              {/* Recipient Breakdown Summary */}
               <div>
-                <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  Recipient Breakdown
+                <h4 className="text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-2">
+                  Recipient Dispatch Summary
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-lg">
+                  <div className="p-3 bg-emerald-50/40 border border-emerald-200 rounded">
                     <p className="text-xs text-emerald-800 font-medium">Shortlisted Candidates</p>
-                    <p className="text-xl font-bold text-state-success mt-1">
+                    <p className="text-xl font-bold text-emerald-700 mt-1">
                       {candidateCounts.shortlisted}
                     </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Will receive Acceptance Email</p>
+                    <p className="text-[11px] text-emerald-600 mt-0.5">Shortlist decision email</p>
                   </div>
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                    <p className="text-xs text-slate-700 font-medium">Unshortlisted Candidates</p>
-                    <p className="text-xl font-bold text-slate-800 mt-1">
+                  <div className="p-3 bg-surface-subtle border border-border rounded">
+                    <p className="text-xs text-ink-primary font-medium">Unshortlisted Candidates</p>
+                    <p className="text-xl font-bold text-ink-primary mt-1">
                       {candidateCounts.unshortlisted}
                     </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Will receive Regret Email</p>
+                    <p className="text-[11px] text-ink-muted mt-0.5">Regret notification email</p>
                   </div>
                 </div>
               </div>
 
               {/* Connected Sender Info */}
-              <div className="p-3.5 border border-slate-200 rounded-lg bg-slate-50 flex items-center justify-between">
+              <div className="p-3.5 border border-border rounded bg-surface-subtle flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <Mail className="w-4 h-4 text-brand-indigo" />
+                  <Mail className="w-4 h-4 text-brand shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-primary">
+                    <p className="text-xs font-semibold text-ink-primary">
                       {connectedAccount
                         ? connectedAccount.address
                         : 'No sender account connected'}
                     </p>
-                    <p className="text-[10px] text-slate-secondary">
+                    <p className="text-[11px] text-ink-secondary">
                       {connectedAccount
-                        ? `Sending via ${connectedAccount.provider.toUpperCase()} OAuth`
+                        ? `Sending via ${connectedAccount.provider.toUpperCase()} OAuth integration`
                         : 'Please connect an account in Email Settings first.'}
                     </p>
                   </div>
                 </div>
                 {!connectedAccount && (
-                  <span className="text-[11px] font-semibold text-state-danger">Required</span>
+                  <span className="text-[11px] font-semibold text-state-danger bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                    Required
+                  </span>
                 )}
               </div>
 
               {/* Daily Limit Warning Banner */}
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs text-amber-900 leading-relaxed">
-                <AlertTriangle className="w-4 h-4 text-state-warning flex-shrink-0 mt-0.5" />
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded flex items-start gap-2.5 text-xs text-amber-900 leading-relaxed">
+                <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold">Provider Daily Rate Limits:</span> Gmail and Outlook enforce daily sending caps (e.g., 500-2,000/day). To ensure high deliverability and avoid spam filters, outbound emails are automatically throttled (~1 message per 2 seconds).
+                  <span className="font-semibold">Provider Rate Limits & Throttling:</span> Major providers (Google Workspace / Microsoft 365) enforce daily sending quotas (500–2,000 emails/day). To protect inbox reputation and deliverability, emails are queued and dispatched with automatic spacing (~1 message every 2 seconds).
                 </div>
               </div>
 
               {/* Batch Lock Notice */}
-              <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg flex items-start gap-2.5 text-xs text-slate-600">
-                <Lock className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+              <div className="p-3 bg-surface-subtle border border-border rounded flex items-start gap-2.5 text-xs text-ink-secondary">
+                <Lock className="w-4 h-4 text-ink-muted flex-shrink-0 mt-0.5" />
                 <span>
-                  Once finalized, this batch is <strong>permanently locked</strong>. Candidate statuses, criteria, and cutoff thresholds cannot be edited while emails are in flight.
+                  Once finalized, this batch is <strong>permanently locked</strong>. Candidate statuses, criteria scores, and cutoff thresholds cannot be modified while emails are queued.
                 </span>
               </div>
 
               {/* Confirmation Input Guard */}
-              <div className="pt-2 border-t border-slate-100">
-                <label className="block text-xs font-semibold text-slate-primary mb-1">
+              <div className="pt-2 border-t border-border">
+                <label className="block text-xs font-semibold text-ink-primary mb-1">
                   Type <span className="font-mono text-state-danger font-bold">SEND</span> to confirm dispatch:
                 </label>
                 <input
@@ -193,7 +244,7 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
                   value={confirmationText}
                   onChange={(e) => setConfirmationText(e.target.value)}
                   placeholder="Type SEND in capital letters"
-                  className="w-full text-xs font-mono border border-slate-300 rounded-md px-3 py-2 bg-white text-slate-primary focus:outline-none focus:ring-1 focus:ring-brand-indigo uppercase"
+                  className="w-full text-xs font-mono border border-border rounded px-3 py-2 bg-surface text-ink-primary focus:outline-none focus:ring-1 focus:ring-ring uppercase tracking-wider"
                 />
               </div>
             </>
@@ -201,11 +252,11 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3.5 border-t border-slate-border bg-slate-50 flex items-center justify-between">
+        <div className="px-6 py-3.5 border-t border-border bg-surface-subtle flex items-center justify-between">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors shadow-xs"
+            className="px-4 py-1.5 text-xs font-semibold rounded bg-surface border border-border text-ink-secondary hover:text-ink-primary hover:bg-surface-hover transition-colors shadow-2xs"
           >
             Cancel
           </button>
@@ -220,7 +271,7 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
                 finalizeMutation.isPending ||
                 totalRecipients === 0
               }
-              className="inline-flex items-center gap-1.5 px-5 py-1.5 text-xs font-semibold rounded text-white bg-state-danger hover:bg-red-700 transition-colors shadow-xs disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-5 py-1.5 text-xs font-semibold rounded text-white bg-state-danger hover:bg-red-700 transition-colors shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-3.5 h-3.5" />
               {finalizeMutation.isPending ? 'Finalizing & Enqueuing...' : 'Finalize & Dispatch Emails'}

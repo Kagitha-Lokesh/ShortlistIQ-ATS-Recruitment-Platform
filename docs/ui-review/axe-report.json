@@ -1,0 +1,118 @@
+{
+  "summary": {
+    "totalCritical": 0,
+    "totalSerious": 0,
+    "totalModerate": 0,
+    "totalMinor": 0
+  },
+  "report": [
+    {
+      "name": "Landing Page",
+      "path": "/",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Sign In",
+      "path": "/auth/signin",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Sign Up HR",
+      "path": "/auth/signup-hr",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Candidate Checker Input",
+      "path": "/checker",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Candidate Results",
+      "path": "/checks/e706fee6-1ef4-4415-a90d-2ddb2f50bcb9",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Candidate Suggestions",
+      "path": "/checks/e706fee6-1ef4-4415-a90d-2ddb2f50bcb9/suggestions",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Candidate Template & Export",
+      "path": "/checks/e706fee6-1ef4-4415-a90d-2ddb2f50bcb9/export",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Candidate History",
+      "path": "/checker/history",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "Data Deletion Request",
+      "path": "/privacy/delete-data",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "HR Dashboard",
+      "path": "/hr/dashboard",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "HR Batch Wizard",
+      "path": "/hr/batches/new",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    },
+    {
+      "name": "HR Settings",
+      "path": "/hr/settings",
+      "criticalCount": 0,
+      "seriousCount": 0,
+      "moderateCount": 0,
+      "minorCount": 0,
+      "violations": []
+    }
+  ]
+}

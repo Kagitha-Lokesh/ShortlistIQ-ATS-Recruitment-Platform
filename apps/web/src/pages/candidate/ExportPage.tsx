@@ -15,12 +15,14 @@ import {
   Edit3,
   Loader2,
   Plus,
-  Trash2
+  Trash2,
+  Check
 } from 'lucide-react';
 import { ResumeData, TemplateThemeOptions } from '@shortlistiq/shared';
-import { checksApi, CandidateCheckData, ApiError } from '../../lib/api';
+import { checksApi, CandidateCheckData } from '../../lib/api';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useToast } from '../../context/ToastContext';
+import { getAtsCheck, updateAtsCheck } from '../../lib/atsStorage';
 
 const ACCENT_COLOR_MAP: Record<string, { name: string; hex: string; bgClass: string }> = {
   indigo: { name: 'Deep Indigo', hex: '#3730A3', bgClass: 'bg-[#3730A3]' },
@@ -47,6 +49,7 @@ export const ExportPage: React.FC = () => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
+  const [latexSource, setLatexSource] = useState<string>('');
 
   // Verification state
   const [verification, setVerification] = useState<{
@@ -57,29 +60,66 @@ export const ExportPage: React.FC = () => {
   } | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Background fetch of high-quality export representation
+  useEffect(() => {
+    if (id && resumeData && !latexSource) {
+      checksApi
+        .getLatexSource(id, { resumeData, options })
+        .then((res) => {
+          setLatexSource(res.data.latexSource);
+          updateAtsCheck(id, { latexSource: res.data.latexSource });
+        })
+        .catch(() => {
+          // Silent fallback to standard PDF engine if LaTeX service is unreachable
+        });
+    }
+  }, [id, resumeData]);
+
   useEffect(() => {
     if (!id) return;
-    setIsLoading(true);
+
+    // Check localStorage first for instant hydration
+    const cached = getAtsCheck(id);
+    if (cached) {
+      if (cached.resumeData) {
+        setResumeData(cached.resumeData);
+        setIsLoading(false);
+        runVerification(id, cached.resumeData, options);
+      }
+      if (cached.latexSource) {
+        setLatexSource(cached.latexSource);
+      }
+      setCheck(cached as any);
+    } else {
+      setIsLoading(true);
+    }
 
     Promise.all([checksApi.getCheck(id), checksApi.getResumeData(id)])
       .then(([checkRes, resumeRes]) => {
         setCheck(checkRes.data);
         setResumeData(resumeRes.data.resumeData);
+        updateAtsCheck(id, {
+          resumeData: resumeRes.data.resumeData,
+          candidateName: resumeRes.data.resumeData.contact?.fullName || 'Candidate'
+        });
 
         // Run initial verification
         runVerification(id, resumeRes.data.resumeData, options);
       })
       .catch((err) => {
-        addToast('error', err.message || 'Failed to load resume details.');
+        if (!cached?.resumeData) {
+          addToast('error', err.message || 'Failed to load resume details.');
+        }
       })
       .finally(() => setIsLoading(false));
   }, [id]);
 
   const runVerification = (
     checkId: string,
-    data: ResumeData,
+    data: ResumeData | null | undefined,
     opts: TemplateThemeOptions
   ) => {
+    if (!data) return;
     setIsVerifying(true);
     checksApi
       .verifyAndExportPdf(checkId, { resumeData: data, options: opts })
@@ -94,8 +134,13 @@ export const ExportPage: React.FC = () => {
     if (!id || !resumeData) return;
     setIsExportingPdf(true);
     try {
-      const filename = `${resumeData.contact.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_ATS_Resume.pdf`;
-      await checksApi.downloadPdf(id, { resumeData, options }, filename);
+      const filename = `${(resumeData.contact?.fullName || 'Candidate').replace(/[^a-zA-Z0-9]/g, '_')}_ATS_Resume.pdf`;
+      addToast('info', 'Compiling and verifying ATS resume PDF…');
+      if (latexSource) {
+        await checksApi.downloadLatexPdf(id, { latexSource, resumeData }, filename);
+      } else {
+        await checksApi.downloadPdf(id, { resumeData, options }, filename);
+      }
       addToast('success', 'PDF downloaded successfully!');
     } catch (err) {
       addToast('error', err instanceof Error ? err.message : 'Failed to download PDF.');
@@ -108,13 +153,28 @@ export const ExportPage: React.FC = () => {
     if (!id || !resumeData) return;
     setIsExportingDocx(true);
     try {
-      const filename = `${resumeData.contact.fullName.replace(/[^a-zA-Z0-9]/g, '_')}_ATS_Resume.docx`;
+      const filename = `${(resumeData.contact?.fullName || 'Candidate').replace(/[^a-zA-Z0-9]/g, '_')}_ATS_Resume.docx`;
       await checksApi.downloadDocx(id, { resumeData, options }, filename);
       addToast('success', 'Word document (.docx) downloaded successfully!');
     } catch (err) {
       addToast('error', err instanceof Error ? err.message : 'Failed to download DOCX.');
     } finally {
       setIsExportingDocx(false);
+    }
+  };
+
+  const handleOptionChange = (newOpts: TemplateThemeOptions) => {
+    setOptions(newOpts);
+    if (id && resumeData) {
+      runVerification(id, resumeData, newOpts);
+      // Refresh backend source in background
+      checksApi
+        .getLatexSource(id, { resumeData, options: newOpts })
+        .then((res) => {
+          setLatexSource(res.data.latexSource);
+          updateAtsCheck(id, { latexSource: res.data.latexSource });
+        })
+        .catch(() => {});
     }
   };
 
@@ -140,32 +200,32 @@ export const ExportPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-border">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Link
             to={`/checks/${id}/suggestions`}
-            className="p-2 rounded hover:bg-slate-100 text-slate-secondary transition-colors"
+            className="p-2 rounded-md hover:bg-surface-hover text-ink-secondary hover:text-ink-primary transition-colors"
             title="Back to Suggestions"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-primary flex items-center gap-2">
-              <FileText className="w-5 h-5 text-brand-indigo" />
+            <h1 className="text-xl font-bold text-ink-primary flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
               ATS-Optimized Resume Export
             </h1>
-            <p className="text-xs text-slate-secondary">
+            <p className="text-xs text-ink-secondary">
               Single-column, pure text formatting engineered to pass parsing filters and maintain 100% human legibility.
             </p>
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: Only ONE Download PDF button, plus Word (.docx) */}
         <div className="flex items-center gap-3">
           <button
             onClick={handleDownloadDocx}
             disabled={isExportingDocx}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded text-slate-primary bg-white border border-slate-border hover:bg-slate-50 transition-colors shadow-soft disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md text-ink-primary bg-surface border border-border hover:bg-surface-hover transition-colors shadow-xs disabled:opacity-50"
           >
             {isExportingDocx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             Download Word (.docx)
@@ -173,7 +233,7 @@ export const ExportPage: React.FC = () => {
           <button
             onClick={handleDownloadPdf}
             disabled={isExportingPdf}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-sm disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary-hover transition-colors shadow-xs disabled:opacity-50"
           >
             {isExportingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
             Download PDF
@@ -181,46 +241,65 @@ export const ExportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Verification Banner */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-soft">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="w-5 h-5 text-state-success flex-shrink-0 mt-0.5" />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
-                ATS Parseability Verified (100% Extractable Text)
-              </span>
-              {isVerifying && <Loader2 className="w-3 h-3 text-state-success animate-spin" />}
+      {/* Parse Verification Banner */}
+      {verification && !verification.extractable ? (
+        <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-xs">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                  Verification Warning: Potential Parse Issue Detected
+                </span>
+                {isVerifying && <Loader2 className="w-3 h-3 text-amber-600 animate-spin" />}
+              </div>
+              <p className="text-xs text-amber-900 mt-0.5">
+                The compiled document had missing section headers or unextracted text blocks. Please review your content in the Edit tab before submitting to an employer.
+              </p>
             </div>
-            <p className="text-xs text-emerald-900 mt-0.5">
-              Verified Section Sequence:{' '}
-              <strong>
-                {verification?.sectionsDetected && verification.sectionsDetected.length > 0
-                  ? verification.sectionsDetected.join(' → ')
-                  : 'Professional Summary → Technical Skills → Work Experience → Education'}
-              </strong>
-            </p>
           </div>
         </div>
+      ) : (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-xs">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-status-shortlist-text flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-emerald-950 uppercase tracking-wider">
+                  ATS Parseability Verified (100% Extractable Text)
+                </span>
+                {isVerifying && <Loader2 className="w-3 h-3 text-status-shortlist-text animate-spin" />}
+              </div>
+              <p className="text-xs text-emerald-900 mt-0.5">
+                Verified Section Sequence:{' '}
+                <strong>
+                  {verification?.sectionsDetected && verification.sectionsDetected.length > 0
+                    ? verification.sectionsDetected.join(' → ')
+                    : 'Professional Summary → Technical Skills → Work Experience → Education'}
+                </strong>
+              </p>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-3 pl-8 md:pl-0">
-          <div className="text-right">
-            <span className="text-[11px] font-semibold uppercase text-emerald-800 block">Verified ATS Score</span>
-            <span className="text-lg font-extrabold text-state-success">
-              {verification?.reParsedScore ?? check?.scoreAfter ?? check?.scoreBefore ?? 85} / 100
-            </span>
+          <div className="flex items-center gap-3 pl-8 md:pl-0">
+            <div className="text-right">
+              <span className="text-[11px] font-semibold uppercase text-emerald-800 block">Verified ATS Score</span>
+              <span className="text-lg font-extrabold text-status-shortlist-text">
+                {verification?.reParsedScore ?? check?.scoreAfter ?? check?.scoreBefore ?? 85} / 100
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Mode Navigation Tabs */}
-      <div className="flex gap-2 border-b border-slate-border">
+      {/* Mode Navigation Tabs: Focused on Preview & Editing */}
+      <div className="flex gap-2 border-b border-border">
         <button
           onClick={() => setActiveTab('preview')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
             activeTab === 'preview'
-              ? 'border-brand-indigo text-brand-indigo'
-              : 'border-transparent text-slate-secondary hover:text-slate-primary'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-ink-secondary hover:text-ink-primary'
           }`}
         >
           <Layout className="w-4 h-4" />
@@ -230,8 +309,8 @@ export const ExportPage: React.FC = () => {
           onClick={() => setActiveTab('edit')}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
             activeTab === 'edit'
-              ? 'border-brand-indigo text-brand-indigo'
-              : 'border-transparent text-slate-secondary hover:text-slate-primary'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-ink-secondary hover:text-ink-primary'
           }`}
         >
           <Edit3 className="w-4 h-4" />
@@ -240,13 +319,13 @@ export const ExportPage: React.FC = () => {
       </div>
 
       {/* TAB 1: Preview & Template Settings */}
-      {activeTab === 'preview' ? (
+      {activeTab === 'preview' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Controls Sidebar (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* 1. Template Gallery */}
-            <div className="bg-card border border-slate-border rounded-lg p-5 shadow-soft space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-muted flex items-center gap-1.5">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center gap-1.5">
                 <Layout className="w-3.5 h-3.5" />
                 Select ATS Template
               </label>
@@ -260,27 +339,23 @@ export const ExportPage: React.FC = () => {
                 ].map((tpl) => (
                   <button
                     key={tpl.id}
-                    onClick={() => {
-                      const nextOpts = { ...options, template: tpl.id as any };
-                      setOptions(nextOpts);
-                      if (id) runVerification(id, resumeData, nextOpts);
-                    }}
+                    onClick={() => handleOptionChange({ ...options, template: tpl.id as any })}
                     className={`p-3 text-left rounded-lg border text-xs transition-all ${
                       options.template === tpl.id
-                        ? 'border-brand-indigo bg-indigo-50/40 text-brand-indigo ring-1 ring-brand-indigo'
-                        : 'border-slate-border hover:border-slate-300 bg-white text-slate-primary'
+                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                        : 'border-border hover:border-border-strong bg-surface text-ink-primary'
                     }`}
                   >
                     <span className="font-bold block mb-0.5">{tpl.name}</span>
-                    <span className="text-[10px] text-slate-secondary leading-tight block">{tpl.desc}</span>
+                    <span className="text-[10px] text-ink-secondary leading-tight block">{tpl.desc}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* 2. Accent Color Palette */}
-            <div className="bg-card border border-slate-border rounded-lg p-5 shadow-soft space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-muted flex items-center gap-1.5">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center gap-1.5">
                 <Palette className="w-3.5 h-3.5" />
                 Accent Color (Safe Palette)
               </label>
@@ -289,14 +364,10 @@ export const ExportPage: React.FC = () => {
                 {Object.entries(ACCENT_COLOR_MAP).map(([key, col]) => (
                   <button
                     key={key}
-                    onClick={() => {
-                      const nextOpts = { ...options, accentColor: key as any };
-                      setOptions(nextOpts);
-                      if (id) runVerification(id, resumeData, nextOpts);
-                    }}
+                    onClick={() => handleOptionChange({ ...options, accentColor: key as any })}
                     title={col.name}
                     className={`w-7 h-7 rounded-full transition-transform ${col.bgClass} ${
-                      options.accentColor === key ? 'ring-2 ring-offset-2 ring-brand-indigo scale-110' : 'hover:scale-105'
+                      options.accentColor === key ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105'
                     }`}
                   />
                 ))}
@@ -304,9 +375,9 @@ export const ExportPage: React.FC = () => {
             </div>
 
             {/* 3. Typography & Spacing */}
-            <div className="bg-card border border-slate-border rounded-lg p-5 shadow-soft space-y-4">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-muted flex items-center gap-1.5 mb-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center gap-1.5 mb-2">
                   <Type className="w-3.5 h-3.5" />
                   Font Size
                 </label>
@@ -314,11 +385,11 @@ export const ExportPage: React.FC = () => {
                   {(['small', 'medium', 'large'] as const).map((sz) => (
                     <button
                       key={sz}
-                      onClick={() => setOptions({ ...options, fontSize: sz })}
-                      className={`py-1.5 text-xs font-medium capitalize rounded border transition-colors ${
+                      onClick={() => handleOptionChange({ ...options, fontSize: sz })}
+                      className={`py-1.5 text-xs font-medium capitalize rounded-md border transition-colors ${
                         options.fontSize === sz
-                          ? 'bg-brand-indigo text-white border-brand-indigo'
-                          : 'bg-white text-slate-secondary border-slate-border hover:bg-slate-50'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-surface text-ink-secondary border-border hover:bg-surface-hover'
                       }`}
                     >
                       {sz}
@@ -328,7 +399,7 @@ export const ExportPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-muted flex items-center gap-1.5 mb-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center gap-1.5 mb-2">
                   <Maximize2 className="w-3.5 h-3.5" />
                   Page Margins
                 </label>
@@ -336,11 +407,11 @@ export const ExportPage: React.FC = () => {
                   {(['compact', 'normal', 'spacious'] as const).map((m) => (
                     <button
                       key={m}
-                      onClick={() => setOptions({ ...options, margins: m })}
-                      className={`py-1.5 text-xs font-medium capitalize rounded border transition-colors ${
+                      onClick={() => handleOptionChange({ ...options, margins: m })}
+                      className={`py-1.5 text-xs font-medium capitalize rounded-md border transition-colors ${
                         options.margins === m
-                          ? 'bg-brand-indigo text-white border-brand-indigo'
-                          : 'bg-white text-slate-secondary border-slate-border hover:bg-slate-50'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-surface text-ink-secondary border-border hover:bg-surface-hover'
                       }`}
                     >
                       {m}
@@ -352,9 +423,9 @@ export const ExportPage: React.FC = () => {
           </div>
 
           {/* Right Main Pane: Live A4 HTML Preview (8 Cols) */}
-          <div className="lg:col-span-8 flex justify-center bg-slate-100/70 p-6 rounded-lg border border-slate-border overflow-x-auto">
+          <div className="lg:col-span-8 flex justify-center bg-surface-muted p-6 rounded-lg border border-border overflow-x-auto">
             <div
-              className={`w-full max-w-[760px] min-h-[960px] bg-white shadow-md border border-slate-200 transition-all ${
+              className={`w-full max-w-[760px] min-h-[960px] bg-white text-slate-900 shadow-md border border-slate-200 transition-all ${
                 options.template === 'classic' ? 'font-serif' : 'font-sans'
               } ${
                 options.margins === 'compact'
@@ -486,13 +557,15 @@ export const ExportPage: React.FC = () => {
             </div>
           </div>
         </div>
-      ) : (
-        /* TAB 2: Editable Review Form */
-        <div className="bg-card border border-slate-border rounded-lg p-6 shadow-soft space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-border">
+      )}
+
+      {/* TAB 2: Editable Review Form */}
+      {activeTab === 'edit' && (
+        <div className="bg-surface border border-border rounded-lg p-6 shadow-xs space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-border">
             <div>
-              <h2 className="text-base font-bold text-slate-primary">Verify & Edit Resume Content</h2>
-              <p className="text-xs text-slate-secondary">
+              <h2 className="text-base font-bold text-ink-primary">Verify & Edit Resume Content</h2>
+              <p className="text-xs text-ink-secondary">
                 Ensure all converted fields and accepted suggestions match your exact career history before downloading.
               </p>
             </div>
@@ -501,7 +574,7 @@ export const ExportPage: React.FC = () => {
                 setActiveTab('preview');
                 if (id) runVerification(id, resumeData, options);
               }}
-              className="px-4 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover shadow-sm"
+              className="px-4 py-2 text-xs font-semibold rounded-md text-primary-foreground bg-primary hover:bg-primary-hover shadow-xs"
             >
               Save & Preview Templates
             </button>
@@ -509,10 +582,10 @@ export const ExportPage: React.FC = () => {
 
           {/* Contact Fields */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-muted">Contact Information</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted">Contact Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-secondary mb-1">Full Name</label>
+                <label className="block text-xs font-medium text-ink-secondary mb-1">Full Name</label>
                 <input
                   type="text"
                   value={resumeData.contact.fullName}
@@ -522,11 +595,11 @@ export const ExportPage: React.FC = () => {
                       contact: { ...resumeData.contact, fullName: e.target.value }
                     })
                   }
-                  className="w-full text-xs p-2 rounded border border-slate-border bg-white"
+                  className="w-full text-xs p-2 rounded-md border border-border bg-surface text-ink-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-secondary mb-1">Email</label>
+                <label className="block text-xs font-medium text-ink-secondary mb-1">Email</label>
                 <input
                   type="text"
                   value={resumeData.contact.email}
@@ -536,11 +609,11 @@ export const ExportPage: React.FC = () => {
                       contact: { ...resumeData.contact, email: e.target.value }
                     })
                   }
-                  className="w-full text-xs p-2 rounded border border-slate-border bg-white"
+                  className="w-full text-xs p-2 rounded-md border border-border bg-surface text-ink-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-secondary mb-1">Phone</label>
+                <label className="block text-xs font-medium text-ink-secondary mb-1">Phone</label>
                 <input
                   type="text"
                   value={resumeData.contact.phone || ''}
@@ -550,7 +623,7 @@ export const ExportPage: React.FC = () => {
                       contact: { ...resumeData.contact, phone: e.target.value }
                     })
                   }
-                  className="w-full text-xs p-2 rounded border border-slate-border bg-white"
+                  className="w-full text-xs p-2 rounded-md border border-border bg-surface text-ink-primary"
                 />
               </div>
             </div>
@@ -558,19 +631,19 @@ export const ExportPage: React.FC = () => {
 
           {/* Summary */}
           <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-muted">Professional Summary</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted">Professional Summary</h3>
             <textarea
               rows={4}
               value={resumeData.summary}
               onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })}
-              className="w-full text-xs p-2.5 rounded border border-slate-border bg-white font-sans leading-relaxed"
+              className="w-full text-xs p-2.5 rounded-md border border-border bg-surface text-ink-primary font-sans leading-relaxed"
             />
           </div>
 
           {/* Experience Entries */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-muted">Work Experience</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-ink-muted">Work Experience</h3>
               <button
                 type="button"
                 onClick={() =>
@@ -590,23 +663,23 @@ export const ExportPage: React.FC = () => {
                     ]
                   })
                 }
-                className="inline-flex items-center gap-1 text-xs text-brand-indigo hover:underline font-medium"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Experience
               </button>
             </div>
 
             {resumeData.experience.map((job, idx) => (
-              <div key={idx} className="p-4 rounded-lg border border-slate-border bg-slate-50/50 space-y-3">
+              <div key={idx} className="p-4 rounded-lg border border-border bg-surface-muted/50 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-slate-primary">Position #{idx + 1}</span>
+                  <span className="text-xs font-bold text-ink-primary">Position #{idx + 1}</span>
                   <button
                     type="button"
                     onClick={() => {
                       const updated = resumeData.experience.filter((_, i) => i !== idx);
                       setResumeData({ ...resumeData, experience: updated });
                     }}
-                    className="text-slate-muted hover:text-state-danger p-1"
+                    className="text-ink-muted hover:text-status-danger-text p-1"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -614,7 +687,7 @@ export const ExportPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-secondary mb-0.5">Job Title</label>
+                    <label className="block text-[11px] font-medium text-ink-secondary mb-0.5">Job Title</label>
                     <input
                       type="text"
                       value={job.title}
@@ -623,11 +696,11 @@ export const ExportPage: React.FC = () => {
                         next[idx].title = e.target.value;
                         setResumeData({ ...resumeData, experience: next });
                       }}
-                      className="w-full text-xs p-1.5 rounded border border-slate-border bg-white"
+                      className="w-full text-xs p-1.5 rounded-md border border-border bg-surface text-ink-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-secondary mb-0.5">Company</label>
+                    <label className="block text-[11px] font-medium text-ink-secondary mb-0.5">Company</label>
                     <input
                       type="text"
                       value={job.company}
@@ -636,14 +709,14 @@ export const ExportPage: React.FC = () => {
                         next[idx].company = e.target.value;
                         setResumeData({ ...resumeData, experience: next });
                       }}
-                      className="w-full text-xs p-1.5 rounded border border-slate-border bg-white"
+                      className="w-full text-xs p-1.5 rounded-md border border-border bg-surface text-ink-primary"
                     />
                   </div>
                 </div>
 
                 {/* Highlights */}
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-secondary mb-0.5">
+                  <label className="block text-[11px] font-medium text-ink-secondary mb-0.5">
                     Bullet Highlights (one per line)
                   </label>
                   <textarea
@@ -654,7 +727,7 @@ export const ExportPage: React.FC = () => {
                       next[idx].highlights = e.target.value.split('\n').filter(Boolean);
                       setResumeData({ ...resumeData, experience: next });
                     }}
-                    className="w-full text-xs p-2 rounded border border-slate-border bg-white font-mono"
+                    className="w-full text-xs p-2 rounded-md border border-border bg-surface text-ink-primary font-mono"
                   />
                 </div>
               </div>

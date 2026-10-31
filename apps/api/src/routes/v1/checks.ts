@@ -5,7 +5,8 @@ import {
   scoreResume,
   segmentSections,
   extractBasics,
-  convertParsedToResumeData
+  convertParsedToResumeData,
+  validateIsJobDescription
 } from '@shortlistiq/engine';
 import {
   ResumeDataSchema,
@@ -28,7 +29,11 @@ import { aiService } from '../../services/ai.js';
 import {
   generateResumePdf,
   generateResumeDocx,
-  verifyGeneratedPdf
+  verifyGeneratedPdf,
+  generateResumeLatexPdf,
+  generateLatexSource,
+  compileLatexToPdf,
+  assertExportGrounded
 } from '../../services/export/index.js';
 import { verifyTurnstile } from '../../services/turnstile.js';
 
@@ -60,6 +65,13 @@ async function getAuthorizedCheck(req: Request, checkId: string) {
   }
   if (!check && anonToken) {
     check = await candidateCheckRepository.findByIdAndToken(checkId, anonToken);
+  }
+  // Fallback: If caller has no token and no user (e.g. direct link in an environment without cookies/headers)
+  if (!check && !userId && !anonToken) {
+    const directCheck = await candidateCheckRepository.findById(checkId);
+    if (directCheck && !directCheck.userId) {
+      check = directCheck;
+    }
   }
 
   if (!check) {
@@ -93,6 +105,16 @@ checksRouter.post(
           400,
           'INVALID_JD',
           'Job description is required and must contain at least 30 characters.'
+        );
+      }
+
+      // Candidate-side checker accuracy: verify text resembles a legitimate job description
+      const jdValidation = validateIsJobDescription(jdText);
+      if (!jdValidation.isValid) {
+        throw new AppError(
+          400,
+          'INVALID_JD',
+          jdValidation.reason || 'The provided text does not appear to be a job description. Please paste a job description with requirements or responsibilities.'
         );
       }
 
@@ -365,7 +387,12 @@ checksRouter.get('/:id/resume-data', async (req: Request, res: Response, next: N
 checksRouter.post('/:id/export/pdf', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const checkId = req.params.id as string;
-    const check = await getAuthorizedCheck(req, checkId);
+    let check: any = null;
+    try {
+      check = await getAuthorizedCheck(req, checkId);
+    } catch (e) {
+      if (!req.body.resumeData) throw e;
+    }
 
     const resumeParsed = ResumeDataSchema.safeParse(req.body.resumeData);
     if (!resumeParsed.success) {
@@ -380,7 +407,7 @@ checksRouter.post('/:id/export/pdf', async (req: Request, res: Response, next: N
     const pdfBuffer = await generateResumePdf(resumeParsed.data, options);
 
     // Re-parse with Phase 3 engine to verify 100% extractability and compute verified ATS score
-    const verification = await verifyGeneratedPdf(pdfBuffer, check.jdText);
+    const verification = await verifyGeneratedPdf(pdfBuffer, check?.jdText || '');
 
     // If authenticated user, save in Supabase storage generated bucket
     if (req.user?.id) {
@@ -422,7 +449,12 @@ checksRouter.post('/:id/export/pdf', async (req: Request, res: Response, next: N
 checksRouter.post('/:id/export/docx', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const checkId = req.params.id as string;
-    const _check = await getAuthorizedCheck(req, checkId);
+    let _check: any = null;
+    try {
+      _check = await getAuthorizedCheck(req, checkId);
+    } catch (e) {
+      if (!req.body.resumeData) throw e;
+    }
 
     const resumeParsed = ResumeDataSchema.safeParse(req.body.resumeData);
     if (!resumeParsed.success) {
@@ -455,6 +487,92 @@ checksRouter.post('/:id/export/docx', async (req: Request, res: Response, next: 
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', docxBuffer.length);
     res.send(docxBuffer);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/checks/:id/export/latex-source
+ * Generates and returns raw LaTeX source code for the candidate's resume so they can view and edit it in the UI.
+ */
+checksRouter.post('/:id/export/latex-source', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const checkId = req.params.id as string;
+    let _check: any = null;
+    try {
+      _check = await getAuthorizedCheck(req, checkId);
+    } catch (e) {
+      if (!req.body.resumeData) throw e;
+    }
+
+    const resumeParsed = ResumeDataSchema.safeParse(req.body.resumeData);
+    if (!resumeParsed.success) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid resume data format');
+    }
+
+    const optionsParsed = TemplateThemeOptionsSchema.safeParse(req.body.options || {});
+    const latexOpts = optionsParsed.success ? optionsParsed.data : {};
+
+    const latexSource = generateLatexSource(resumeParsed.data, latexOpts);
+
+    res.json({
+      success: true,
+      data: {
+        latexSource
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/checks/:id/export/latex-pdf
+ * Compiles a LaTeX resume PDF server-side.
+ * Supports compiling either user-edited custom LaTeX code (latexSource) or structured ResumeData.
+ * Uses free cloud LaTeX compiler — no Overleaf, no external redirect needed.
+ */
+checksRouter.post('/:id/export/latex-pdf', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const checkId = req.params.id as string;
+    let _check: any = null;
+    try {
+      _check = await getAuthorizedCheck(req, checkId);
+    } catch (e) {
+      if (!req.body.resumeData && !req.body.latexSource) throw e;
+    }
+
+    let pdfBuffer: Buffer;
+    let candidateName = 'Resume';
+
+    if (typeof req.body.latexSource === 'string' && req.body.latexSource.trim().length > 0) {
+      // Compile user-edited custom LaTeX code directly
+      pdfBuffer = await compileLatexToPdf(req.body.latexSource);
+      if (req.body.resumeData?.contact?.fullName) {
+        candidateName = req.body.resumeData.contact.fullName;
+      }
+    } else {
+      // Standard generation from ResumeData
+      const resumeParsed = ResumeDataSchema.safeParse(req.body.resumeData);
+      if (!resumeParsed.success) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid resume data format');
+      }
+
+      const optionsParsed = TemplateThemeOptionsSchema.safeParse(req.body.options || {});
+      const latexOpts = optionsParsed.success ? optionsParsed.data : {};
+
+      pdfBuffer = await generateResumeLatexPdf(resumeParsed.data, latexOpts);
+      candidateName = resumeParsed.data.contact.fullName || 'Resume';
+    }
+
+    const filename = `${candidateName.replace(/[^a-zA-Z0-9]/g, '_')}_LaTeX.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('X-Export-Format', 'latex-pdf');
+    res.send(pdfBuffer);
   } catch (err) {
     next(err);
   }

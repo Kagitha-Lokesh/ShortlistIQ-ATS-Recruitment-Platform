@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,17 +7,133 @@
 @layer base {
   :root {
     color-scheme: light only;
+
+    /* Semantic Core Color Roles (Light Theme Only) */
+    --background: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface-subtle: #F1F5F9;
+    --surface-hover: #F8FAFC;
+    --foreground: #0F172A;
+    --card: #FFFFFF;
+    --card-foreground: #0F172A;
+    --popover: #FFFFFF;
+    --popover-foreground: #0F172A;
+
+    /* Text & Ink Tokens */
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --text-subtle: #94A3B8;
+
+    /* Primary Neutral Action (Achromatic Ink) */
+    --primary: #0F172A;
+    --primary-hover: #1E293B;
+    --primary-foreground: #FFFFFF;
+
+    /* Secondary Neutral */
+    --secondary: #F1F5F9;
+    --secondary-hover: #E2E8F0;
+    --secondary-foreground: #0F172A;
+
+    /* Muted Elements */
+    --muted: #F1F5F9;
+    --muted-foreground: #64748B;
+
+    /* Interactive Brand Accent (Focus & Links) */
+    --brand-accent: #2563EB;
+    --brand-accent-subtle: #EFF6FF;
+
+    /* Border & Divider Tokens */
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --rule: #F1F5F9;
+    --input: #E2E8F0;
+    --ring: #2563EB;
+
+    /* High-Stakes Decision & Recruitment Status Tokens */
+    /* Recommended Shortlist: Forest Emerald (Affirmative human review recommendation) */
+    --state-shortlist-bg: #ECFDF5;
+    --state-shortlist-text: #065F46;
+    --state-shortlist-border: #A7F3D0;
+
+    /* Needs Review: Warm Amber (Uncertain, parser warning, knockout confirmation needed) */
+    --state-review-bg: #FFFBEB;
+    --state-review-text: #92400E;
+    --state-review-border: #FDE68A;
+
+    /* Recommended Not Shortlisted: Cool Slate (Low match estimate, non-punitive, pending HR confirmation) */
+    --state-unshortlisted-bg: #F8FAFC;
+    --state-unshortlisted-text: #475569;
+    --state-unshortlisted-border: #E2E8F0;
+
+    /* Failed / Destructive / Integrity Alert */
+    --state-failed-bg: #FEF2F2;
+    --state-failed-text: #991B1B;
+    --state-failed-border: #FECACA;
+    --destructive: #DC2626;
+    --destructive-foreground: #FFFFFF;
+
+    /* Parse Quality Badges */
+    --parse-ok-bg: #F0FDF4;
+    --parse-ok-text: #166534;
+    --parse-ok-border: #BBF7D0;
+
+    --parse-partial-bg: #FFFBEB;
+    --parse-partial-text: #B45309;
+    --parse-partial-border: #FDE68A;
+
+    --parse-unreadable-bg: #FEF2F2;
+    --parse-unreadable-text: #B91C1C;
+    --parse-unreadable-border: #FECACA;
+
+    /* Chart Semantic Colors */
+    --chart-1: #2563EB;
+    --chart-2: #0D9488;
+    --chart-3: #F59E0B;
+    --chart-4: #64748B;
+    --chart-5: #6366F1;
+
+    /* Geometry Tokens */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-full: 9999px;
+
+    /* Spacing Scale (4px base) */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+
+    /* Shadows (Flat / Subtle Achromatic Elevation) */
+    --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --shadow-soft: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+    --shadow-raised: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   }
 
   body {
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Visible, accessible focus rings */
+  /* Accessible tabular numerals for scores, dates, metrics */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Monospace font for IDs, hashes, regexes, evidence tokens */
+  .font-mono {
+    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  /* Standard visible accessible keyboard focus ring */
   :focus-visible {
-    outline: 2px solid #3730A3;
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }
-

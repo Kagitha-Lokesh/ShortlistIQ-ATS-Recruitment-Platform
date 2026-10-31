@@ -1,28 +1,49 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
   XCircle,
   FileText,
-  User,
-  Mail,
-  Phone,
-  Linkedin,
-  Github,
   Sparkles,
   ArrowRight,
   RotateCcw,
+  Trash2,
+  Info,
+  Check,
   AlertTriangle,
-  Trash2
+  HelpCircle,
+  ArrowLeft
 } from 'lucide-react';
-import { checksApi, CandidateCheckData } from '../../lib/api';
-import { Skeleton } from '../../components/ui/Skeleton';
-import { useAuth } from '../../context/AuthContext';
+import { checksApi, CandidateCheckData } from '../../lib/api.js';
+import { getAtsCheck, updateAtsCheck, removeAtsCheck } from '../../lib/atsStorage.js';
+import { Skeleton } from '../../components/ui/Skeleton.js';
+import { useAuth } from '../../context/AuthContext.js';
+import { useToast } from '../../context/ToastContext.js';
+import { Button } from '../../components/ui/Button.js';
+import { Badge } from '../../components/ui/Badge.js';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.js';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import {
+  animateScoreRing,
+  animateCounter,
+  animateProgressBar,
+  isReducedMotion,
+  MOTION_DURATIONS,
+  MOTION_EASES
+} from '../../lib/motion.js';
 
 export const ResultsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const circleRef = useRef<SVGCircleElement>(null);
+  const scoreNumberRef = useRef<HTMLSpanElement>(null);
+  const barRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const [check, setCheck] = useState<CandidateCheckData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -35,10 +56,20 @@ export const ResultsPage: React.FC = () => {
     }
     try {
       setIsDeleting(true);
+      removeAtsCheck(id);
       await checksApi.deleteCheck(id);
+      showToast({
+        type: 'info',
+        title: 'Check Deleted',
+        message: 'Resume check has been removed.'
+      });
       navigate('/checker');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete check');
+      showToast({
+        type: 'error',
+        title: 'Delete Failed',
+        message: err.message || 'Failed to delete check'
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -46,11 +77,26 @@ export const ResultsPage: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
-    setIsLoading(true);
+
+    const cached = getAtsCheck(id);
+    if (cached) {
+      setCheck(cached as any);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
     checksApi
       .getCheck(id)
-      .then((res) => setCheck(res.data))
-      .catch((err) => setError(err.message || 'Failed to load resume check results.'))
+      .then((res) => {
+        setCheck(res.data);
+        updateAtsCheck(id, res.data);
+      })
+      .catch((err) => {
+        if (!cached) {
+          setError(err.message || 'Failed to load resume check results.');
+        }
+      })
       .finally(() => setIsLoading(false));
   }, [id]);
 
@@ -58,7 +104,7 @@ export const ResultsPage: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-48 w-full rounded-lg" />
+        <Skeleton className="h-44 w-full rounded-lg" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Skeleton className="h-64 rounded-lg" />
           <Skeleton className="h-64 rounded-lg" />
@@ -69,338 +115,382 @@ export const ResultsPage: React.FC = () => {
 
   if (error || !check) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <div className="w-12 h-12 rounded-full bg-red-50 text-state-danger flex items-center justify-center mx-auto mb-4 border border-red-200">
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-red-50 text-state-danger flex items-center justify-center mx-auto border border-red-200">
           <XCircle className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-slate-primary mb-2">Resume Check Not Found</h2>
-        <p className="text-sm text-slate-secondary mb-6">{error || 'Unable to locate this analysis record.'}</p>
-        <Link
-          to="/checker"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors"
+        <h2 className="text-lg font-bold text-ink-primary">Resume Check Not Found</h2>
+        <p className="text-xs text-ink-secondary">{error || 'Unable to locate this analysis record.'}</p>
+        <Button
+          variant="primary"
+          leftIcon={<RotateCcw className="w-4 h-4" />}
+          onClick={() => navigate('/checker')}
         >
-          <RotateCcw className="w-4 h-4" />
           Try Another Resume
-        </Link>
+        </Button>
       </div>
     );
   }
 
   const breakdown = check.breakdown;
-  const overallScore = check.scoreBefore;
-
-  // Determine score color badge
-  const scoreBadge =
-    overallScore >= 75
-      ? { text: 'text-state-success', bg: 'bg-emerald-50', border: 'border-emerald-200', stroke: '#15803D', label: 'Strong Match' }
-      : overallScore >= 50
-      ? { text: 'text-state-warning', bg: 'bg-amber-50', border: 'border-amber-200', stroke: '#B45309', label: 'Moderate Match' }
-      : { text: 'text-state-danger', bg: 'bg-red-50', border: 'border-red-200', stroke: '#B91C1C', label: 'Low ATS Alignment' };
+  const overallScore = Math.round(check.scoreBefore ?? 0);
 
   // SVG circular progress calculation
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (overallScore / 100) * circumference;
 
+  const scoreTier =
+    overallScore >= 75
+      ? { text: 'text-state-success', stroke: '#065F46', label: 'Strong Alignment', variant: 'shortlisted' as const }
+      : overallScore >= 50
+      ? { text: 'text-state-warning', stroke: '#92400E', label: 'Moderate Alignment (Needs Optimization)', variant: 'needs_review' as const }
+      : { text: 'text-state-danger', stroke: '#991B1B', label: 'Low Keyword Alignment', variant: 'unshortlisted' as const };
+
+  // GSAP animation for score ring, numeric counter, and breakdown progress bars
+  useGSAP(
+    () => {
+      if (!check || !containerRef.current) return;
+
+      if (isReducedMotion()) {
+        if (circleRef.current) {
+          gsap.set(circleRef.current, { strokeDashoffset });
+        }
+        if (scoreNumberRef.current) {
+          scoreNumberRef.current.textContent = overallScore.toString();
+        }
+        barRefs.current.forEach((bar, idx) => {
+          if (!bar) return;
+          const val = [
+            breakdown?.keywordScore ?? 0,
+            breakdown?.skillsScore ?? 0,
+            breakdown?.experienceScore ?? 0,
+            breakdown?.formattingScore ?? 0,
+            breakdown?.readabilityScore ?? 0
+          ][idx] ?? 0;
+          gsap.set(bar, { width: `${val}%` });
+        });
+        return;
+      }
+
+      // 1. Entrance stagger for results sections
+      gsap.fromTo(
+        containerRef.current.querySelectorAll('.animate-fade-up'),
+        { opacity: 0, y: 8 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: MOTION_DURATIONS.standard,
+          stagger: 0.04,
+          ease: MOTION_EASES.standard,
+          clearProps: 'transform'
+        }
+      );
+
+      // 2. Animate Circular Score Ring to genuine value
+      animateScoreRing(circleRef.current, overallScore, radius, MOTION_DURATIONS.emphasis);
+
+      // 3. Animate Counter to genuine value
+      animateCounter(scoreNumberRef.current, overallScore, MOTION_DURATIONS.emphasis);
+
+      // 4. Animate Breakdown Progress Bars
+      const scores = [
+        breakdown?.keywordScore ?? 0,
+        breakdown?.skillsScore ?? 0,
+        breakdown?.experienceScore ?? 0,
+        breakdown?.formattingScore ?? 0,
+        breakdown?.readabilityScore ?? 0
+      ];
+      barRefs.current.forEach((bar, idx) => {
+        if (bar) {
+          animateProgressBar(bar, scores[idx] ?? 0, MOTION_DURATIONS.emphasis);
+        }
+      });
+    },
+    { dependencies: [check?.id, overallScore], scope: containerRef }
+  );
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+    <div ref={containerRef} className="max-w-4xl mx-auto px-4 py-6 space-y-6 pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-slate-border">
+      <div className="animate-fade-up flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-muted">ATS Analysis Result</span>
-            <span className="text-slate-muted">•</span>
-            <span className="text-xs text-slate-secondary">{new Date(check.createdAt).toLocaleDateString()}</span>
+            <Link to="/checker" className="text-xs text-ink-muted hover:text-ink-primary flex items-center gap-1 transition-colors">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Checker</span>
+            </Link>
+            <span className="text-border-strong">•</span>
+            <span className="text-xs text-ink-secondary font-mono">{new Date(check.createdAt).toLocaleDateString()}</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-primary">
-            {check.jobTitle} {check.company ? <span className="font-normal text-slate-secondary">at {check.company}</span> : ''}
+          <h1 className="text-xl font-bold tracking-tight text-ink-primary">
+            {check.jobTitle || 'ATS Match Evaluation'} {check.company ? <span className="font-normal text-ink-secondary">at {check.company}</span> : ''}
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          {profile && (
-            <button
-              onClick={handleDeleteCheck}
-              disabled={isDeleting}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded text-state-danger bg-red-50 hover:bg-red-100 border border-red-200 transition-colors shadow-soft disabled:opacity-50"
-              title="Permanently delete this check"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              {isDeleting ? 'Deleting...' : 'Delete Check'}
-            </button>
-          )}
-          <Link
-            to="/checker"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded text-slate-primary bg-white border border-slate-border hover:bg-slate-50 transition-colors shadow-soft"
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+            onClick={() => navigate('/checker')}
           >
-            <RotateCcw className="w-3.5 h-3.5 text-slate-muted" />
             Check Another
-          </Link>
-          <Link
-            to={`/checks/${check.id}/export`}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded text-slate-primary bg-white border border-slate-border hover:bg-slate-50 transition-colors shadow-soft"
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<FileText className="w-3.5 h-3.5" />}
+            onClick={() => navigate(`/checks/${check.id}/export`)}
           >
-            <FileText className="w-3.5 h-3.5 text-brand-indigo" />
-            Export Formats
-          </Link>
-          <Link
-            to={`/checks/${check.id}/suggestions`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-sm"
+            Export Resume
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<Sparkles className="w-3.5 h-3.5" />}
+            rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+            onClick={() => navigate(`/checks/${check.id}/suggestions`)}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            View AI Suggestions
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+            Improve Match Score
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            leftIcon={<Trash2 className="w-3.5 h-3.5 text-ink-muted" />}
+            onClick={handleDeleteCheck}
+            isLoading={isDeleting}
+            aria-label="Delete this check"
+          />
         </div>
       </div>
 
-      {/* Main Score & Overview Card */}
-      <div className="bg-card border border-slate-border rounded-lg shadow-soft p-6 sm:p-8 flex flex-col md:flex-row items-center gap-8">
-        {/* Circular SVG Ring */}
+      {/* Main Score & Plain-Language Summary Card */}
+      <Card className="animate-fade-up shadow-subtle p-6 flex flex-col md:flex-row items-center gap-8">
+        {/* Circular SVG Ring showing true value */}
         <div className="relative flex-shrink-0 flex items-center justify-center">
-          <svg className="w-36 h-36 transform -rotate-90">
+          <svg className="w-32 h-32 transform -rotate-90">
             <circle
-              cx="72"
-              cy="72"
+              cx="64"
+              cy="64"
               r={radius}
-              stroke="#E2E8F0"
-              strokeWidth="10"
+              stroke="var(--border)"
+              strokeWidth="8"
               fill="transparent"
             />
             <circle
-              cx="72"
-              cy="72"
+              ref={circleRef}
+              cx="64"
+              cy="64"
               r={radius}
-              stroke={scoreBadge.stroke}
-              strokeWidth="10"
+              stroke={scoreTier.stroke}
+              strokeWidth="8"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
               fill="transparent"
-              className="transition-all duration-700 ease-out"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className={`text-4xl font-extrabold ${scoreBadge.text}`}>{overallScore}</span>
-            <span className="text-[11px] font-semibold text-slate-muted tracking-wider uppercase">Out of 100</span>
+            <span ref={scoreNumberRef} className={`text-3xl font-extrabold tabular-nums ${scoreTier.text}`}>{overallScore}</span>
+            <span className="text-[10px] font-semibold text-ink-muted tracking-wider uppercase">Out of 100</span>
           </div>
         </div>
 
-        {/* Score Context & Next Step */}
-        <div className="flex-1 space-y-3 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${scoreBadge.bg} ${scoreBadge.text} ${scoreBadge.border}">
-            <span>{scoreBadge.label}</span>
+        {/* Score Context & Plain Language Summary */}
+        <div className="flex-1 space-y-2.5 text-center md:text-left">
+          <div className="inline-flex">
+            <Badge variant={scoreTier.variant} size="md">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{scoreTier.label}</span>
+            </Badge>
           </div>
 
-          <p className="text-sm text-slate-secondary leading-relaxed">
+          <h3 className="text-sm font-semibold text-ink-primary">
+            Plain-Language Match Summary
+          </h3>
+          <p className="text-xs text-ink-secondary leading-relaxed">
             {overallScore >= 75
-              ? 'Your resume strongly matches the core technical requirements and structure expected by modern ATS screening filters.'
+              ? 'Your resume presents strong textual alignment with the core responsibilities and technical qualifications specified in this job description. To maximize interview rates, ensure all highlighted skills cite measurable achievements.'
               : overallScore >= 50
-              ? 'Your resume has a solid foundation but is missing key keywords or structural evidence that ATS algorithms rank for.'
-              : 'Your resume shows significant keyword gaps compared to the target job description. Use our targeted suggestions to bridge the difference.'}
+              ? 'Your resume demonstrates relevant foundational experience but misses several explicit competencies requested by this role. Adding verbatim bullet points for missing skills can significantly improve alignment.'
+              : 'Your resume shows significant keyword and requirement gaps when compared to this job description. Many automated filters may rank this document low unless missing core competencies are clearly documented.'}
           </p>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <Link
               to={`/checks/${check.id}/suggestions`}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-brand-indigo hover:text-brand-hover underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
             >
-              See exactly how to raise your score with safe AI suggestions
-              <ArrowRight className="w-3 h-3" />
+              Review step-by-step suggestions to optimize this score
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
+      </Card>
+
+      {/* Honest Estimate Transparency Notice */}
+      <div className="p-4 bg-surface-subtle border border-border rounded-lg flex items-start gap-3 text-xs text-ink-secondary">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <div>
+          <span className="font-semibold text-ink-primary block mb-0.5">
+            Important Note: This Score is an Estimate
+          </span>
+          <p className="leading-relaxed text-[11px]">
+            This score reflects deterministic keyword overlap and section extractability calculated specifically against the job text provided. It does not guarantee an interview or offer, and it is not an output from any proprietary employer ATS. Human hiring managers make all final selection decisions.
+          </p>
+        </div>
       </div>
 
-      {/* 5 Breakdown Bars */}
-      <div className="bg-card border border-slate-border rounded-lg shadow-soft p-6">
-        <h2 className="text-sm font-bold text-slate-primary uppercase tracking-wider mb-5">
-          Deterministic ATS Breakdown (5 Core Pillars)
-        </h2>
+      {/* Five Breakdown Bars */}
+      <Card className="shadow-subtle p-6 space-y-5">
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-ink-primary">
+            Five-Pillar Match Breakdown
+          </h2>
+          <p className="text-[11px] text-ink-muted mt-0.5">
+            Transparent scoring components calculated deterministically without algorithmic black-boxes.
+          </p>
+        </div>
 
         <div className="space-y-4">
-          {/* 1. Keyword Overlap */}
+          {/* Pillar 1: Keyword Overlap */}
           <div>
-            <div className="flex justify-between text-xs font-semibold mb-1">
-              <span className="text-slate-primary">Keyword Match (TF-IDF weighted)</span>
-              <span className="text-slate-secondary">{breakdown?.keywordScore ?? 0} / 100</span>
+            <div className="flex justify-between text-xs font-medium mb-1">
+              <span className="text-ink-primary">1. Keyword Overlap (TF-IDF weighted)</span>
+              <span className="text-ink-secondary tabular-nums font-semibold">{breakdown?.keywordScore ?? 0} / 100</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-brand-indigo rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[0] = el)}
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${breakdown?.keywordScore ?? 0}%` }}
               />
             </div>
           </div>
 
-          {/* 2. Skills Match */}
+          {/* Pillar 2: Skills Alignment */}
           <div>
-            <div className="flex justify-between text-xs font-semibold mb-1">
-              <span className="text-slate-primary">Skills Alignment (Dictionary & JD match)</span>
-              <span className="text-slate-secondary">{breakdown?.skillsScore ?? 0} / 100</span>
+            <div className="flex justify-between text-xs font-medium mb-1">
+              <span className="text-ink-primary">2. Required Skills Match (Dictionary verified)</span>
+              <span className="text-ink-secondary tabular-nums font-semibold">{breakdown?.skillsScore ?? 0} / 100</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[1] = el)}
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${breakdown?.skillsScore ?? 0}%` }}
               />
             </div>
           </div>
 
-          {/* 3. Experience Relevance */}
+          {/* Pillar 3: Experience Relevance */}
           <div>
-            <div className="flex justify-between text-xs font-semibold mb-1">
-              <span className="text-slate-primary">
-                Experience Relevance ({breakdown?.detectedYearsExperience ?? 0} yrs detected)
+            <div className="flex justify-between text-xs font-medium mb-1">
+              <span className="text-ink-primary">
+                3. Work History Relevance ({breakdown?.detectedYearsExperience ?? 0} yrs detected)
               </span>
-              <span className="text-slate-secondary">{breakdown?.experienceScore ?? 0} / 100</span>
+              <span className="text-ink-secondary tabular-nums font-semibold">{breakdown?.experienceScore ?? 0} / 100</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[2] = el)}
+                className="h-full bg-emerald-700 rounded-full"
                 style={{ width: `${breakdown?.experienceScore ?? 0}%` }}
               />
             </div>
           </div>
 
-          {/* 4. Formatting & Structure */}
+          {/* Pillar 4: Formatting & Structure */}
           <div>
-            <div className="flex justify-between text-xs font-semibold mb-1">
-              <span className="text-slate-primary">Formatting & Section Completeness</span>
-              <span className="text-slate-secondary">{breakdown?.formattingScore ?? 0} / 100</span>
+            <div className="flex justify-between text-xs font-medium mb-1">
+              <span className="text-ink-primary">4. Document Extractability & Section Completeness</span>
+              <span className="text-ink-secondary tabular-nums font-semibold">{breakdown?.formattingScore ?? 0} / 100</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-slate-700 rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[3] = el)}
+                className="h-full bg-slate-700 rounded-full"
                 style={{ width: `${breakdown?.formattingScore ?? 0}%` }}
               />
             </div>
           </div>
 
-          {/* 5. Readability */}
+          {/* Pillar 5: Readability & Document Structure */}
           <div>
-            <div className="flex justify-between text-xs font-semibold mb-1">
-              <span className="text-slate-primary">
-                Readability & Flow (Flesch score: {breakdown?.readability?.readingEase ?? 0})
-              </span>
-              <span className="text-slate-secondary">{breakdown?.readabilityScore ?? 0} / 100</span>
+            <div className="flex justify-between text-xs font-medium mb-1">
+              <span className="text-ink-primary">5. Readability & Clear Structure</span>
+              <span className="text-ink-secondary tabular-nums font-semibold">{breakdown?.readabilityScore ?? 0} / 100</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-amber-600 rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[4] = el)}
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${breakdown?.readabilityScore ?? 0}%` }}
               />
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Two Column Section: Keywords Chips & Candidate Basics */}
+      {/* Matched and Missing Keyword Chips */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Keywords Chips */}
-        <div className="bg-card border border-slate-border rounded-lg shadow-soft p-6 space-y-5">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 className="w-4 h-4 text-state-success" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-primary">
-                Matched Keywords ({breakdown?.matchedKeywords?.length ?? 0})
-              </h3>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {breakdown?.matchedKeywords && breakdown.matchedKeywords.length > 0 ? (
-                breakdown.matchedKeywords.slice(0, 16).map((kw) => (
-                  <span
-                    key={kw}
-                    className="px-2 py-0.5 text-xs rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium"
-                  >
-                    {kw}
-                  </span>
-                ))
-              ) : (
-                <span className="text-xs text-slate-muted">No keywords matched directly</span>
-              )}
-            </div>
+        {/* Matched Keywords */}
+        <Card className="shadow-subtle p-5 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-border">
+            <h3 className="text-xs font-bold text-ink-primary uppercase tracking-wider flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-state-success" />
+              Matched Keywords ({breakdown?.matchedKeywords?.length || 0})
+            </h3>
+            <span className="text-[11px] text-ink-muted">Found in resume</span>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-state-warning" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-primary">
-                Missing Priority Keywords ({breakdown?.missingKeywords?.length ?? 0})
-              </h3>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {breakdown?.missingKeywords && breakdown.missingKeywords.length > 0 ? (
-                breakdown.missingKeywords.slice(0, 16).map((kw) => (
-                  <span
-                    key={kw}
-                    className="px-2 py-0.5 text-xs rounded bg-amber-50 text-amber-800 border border-amber-200 font-medium"
-                  >
-                    {kw}
-                  </span>
-                ))
-              ) : (
-                <span className="text-xs text-state-success font-medium">No critical keywords missing!</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Candidate Basics Extracted */}
-        <div className="bg-card border border-slate-border rounded-lg shadow-soft p-6">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-primary mb-4 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-brand-indigo" />
-            Detected Contact & Identity Info
-          </h3>
-
-          <div className="space-y-3 text-xs">
-            <div className="flex items-center gap-2.5 text-slate-primary">
-              <User className="w-4 h-4 text-slate-muted" />
-              <span className="font-semibold">{breakdown?.basics?.name || 'Not detected'}</span>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <Mail className="w-4 h-4 text-slate-muted" />
-              {breakdown?.basics?.email === 'NO_EMAIL' ? (
-                <span className="text-state-danger font-medium">Missing email in resume!</span>
-              ) : (
-                <span className="text-slate-primary">{breakdown?.basics?.email || 'Not detected'}</span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2.5 text-slate-primary">
-              <Phone className="w-4 h-4 text-slate-muted" />
-              <span>{breakdown?.basics?.phone || 'No phone number detected'}</span>
-            </div>
-
-            <div className="pt-2 border-t border-slate-border flex flex-wrap gap-3">
-              {breakdown?.basics?.links?.linkedin && (
-                <a
-                  href={breakdown.basics.links.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-brand-indigo hover:underline"
+          {breakdown?.matchedKeywords && breakdown.matchedKeywords.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {breakdown.matchedKeywords.map((kw: string, i: number) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200"
                 >
-                  <Linkedin className="w-3.5 h-3.5" />
-                  LinkedIn Profile
-                </a>
-              )}
-              {breakdown?.basics?.links?.github && (
-                <a
-                  href={breakdown.basics.links.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-brand-indigo hover:underline"
-                >
-                  <Github className="w-3.5 h-3.5" />
-                  GitHub Profile
-                </a>
-              )}
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>{kw}</span>
+                </span>
+              ))}
             </div>
+          ) : (
+            <p className="text-xs text-ink-muted py-4 text-center">No exact keywords matched.</p>
+          )}
+        </Card>
+
+        {/* Missing Keywords */}
+        <Card className="shadow-subtle p-5 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-border">
+            <h3 className="text-xs font-bold text-ink-primary uppercase tracking-wider flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-state-warning" />
+              Missing Key Skills ({breakdown?.missingKeywords?.length || 0})
+            </h3>
+            <span className="text-[11px] text-ink-muted">Present in JD</span>
           </div>
-        </div>
+
+          {breakdown?.missingKeywords && breakdown.missingKeywords.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {breakdown.missingKeywords.map((kw: string, i: number) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-amber-50 text-amber-900 border border-amber-200"
+                >
+                  <AlertTriangle className="w-3 h-3 text-amber-700" />
+                  <span>{kw}</span>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-state-success py-4 text-center font-medium">
+              Excellent! No major keyword omissions detected.
+            </p>
+          )}
+        </Card>
       </div>
     </div>
   );
 };
-

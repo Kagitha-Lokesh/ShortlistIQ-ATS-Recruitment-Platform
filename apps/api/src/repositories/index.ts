@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Batch,
@@ -57,6 +59,60 @@ export const inMemoryStore: StoreState = {
   llmCaches: new Map(),
   auditLogs: new Map()
 };
+
+const PERSISTENCE_DIR = path.resolve(process.cwd(), '.data');
+const CHECKS_FILE = path.join(PERSISTENCE_DIR, 'candidateChecks.json');
+const SUGGESTIONS_FILE = path.join(PERSISTENCE_DIR, 'suggestions.json');
+
+export function saveStoreToDisk(): void {
+  if (process.env.NODE_ENV === 'test') return;
+  try {
+    if (!fs.existsSync(PERSISTENCE_DIR)) {
+      fs.mkdirSync(PERSISTENCE_DIR, { recursive: true });
+    }
+    const checksArray = Array.from(inMemoryStore.candidateChecks.values());
+    fs.writeFileSync(CHECKS_FILE, JSON.stringify(checksArray, null, 2), 'utf-8');
+
+    const suggestionsArray = Array.from(inMemoryStore.suggestions.values());
+    fs.writeFileSync(SUGGESTIONS_FILE, JSON.stringify(suggestionsArray, null, 2), 'utf-8');
+  } catch (err) {
+    // Non-blocking fallback
+  }
+}
+
+export function loadStoreFromDisk(): void {
+  if (process.env.NODE_ENV === 'test') return;
+  try {
+    if (fs.existsSync(CHECKS_FILE)) {
+      const raw = fs.readFileSync(CHECKS_FILE, 'utf-8');
+      const checks = JSON.parse(raw);
+      if (Array.isArray(checks)) {
+        for (const c of checks) {
+          c.createdAt = new Date(c.createdAt);
+          c.updatedAt = new Date(c.updatedAt);
+          if (c.expiresAt) c.expiresAt = new Date(c.expiresAt);
+          inMemoryStore.candidateChecks.set(c.id, c);
+        }
+      }
+    }
+    if (fs.existsSync(SUGGESTIONS_FILE)) {
+      const raw = fs.readFileSync(SUGGESTIONS_FILE, 'utf-8');
+      const suggestions = JSON.parse(raw);
+      if (Array.isArray(suggestions)) {
+        for (const s of suggestions) {
+          s.createdAt = new Date(s.createdAt);
+          s.updatedAt = new Date(s.updatedAt);
+          inMemoryStore.suggestions.set(s.id, s);
+        }
+      }
+    }
+  } catch (err) {
+    // Non-blocking
+  }
+}
+
+// Initial hydration from disk
+loadStoreFromDisk();
 
 export function resetRepositories() {
   inMemoryStore.orgs.clear();
@@ -1158,6 +1214,7 @@ export const candidateCheckRepository = {
       updatedAt: new Date()
     };
     inMemoryStore.candidateChecks.set(check.id, check);
+    saveStoreToDisk();
     return check;
   },
 
@@ -1176,6 +1233,7 @@ export const candidateCheckRepository = {
       updatedAt: new Date()
     };
     inMemoryStore.candidateChecks.set(id, updated);
+    saveStoreToDisk();
     return updated;
   },
 
@@ -1189,6 +1247,7 @@ export const candidateCheckRepository = {
     }
 
     inMemoryStore.candidateChecks.delete(id);
+    saveStoreToDisk();
     return { deleted: true, resumePath: check.resumePath };
   },
 
@@ -1207,6 +1266,7 @@ export const candidateCheckRepository = {
       }
     }
 
+    saveStoreToDisk();
     return { deletedCount, resumePaths };
   },
 
@@ -1279,6 +1339,7 @@ export const suggestionRepository = {
       updatedAt: new Date()
     };
     inMemoryStore.suggestions.set(suggestion.id, suggestion);
+    saveStoreToDisk();
     return suggestion;
   },
 
@@ -1299,6 +1360,7 @@ export const suggestionRepository = {
       const s = await this.create(item);
       results.push(s);
     }
+    saveStoreToDisk();
     return results;
   },
 
@@ -1331,6 +1393,7 @@ export const suggestionRepository = {
       updatedAt: new Date()
     };
     inMemoryStore.suggestions.set(id, updated);
+    saveStoreToDisk();
     return updated;
   }
 };

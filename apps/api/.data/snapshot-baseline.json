@@ -1,0 +1,277 @@
+{
+  "capturedAt": "2026-10-31T16:21:09.691Z",
+  "engineVersion": "Engine-V1-Baseline",
+  "totalRecords": 5,
+  "averageScore": 83.2,
+  "entries": [
+    {
+      "id": "e706fee6-1ef4-4415-a90d-2ddb2f50bcb9",
+      "type": "candidate_check",
+      "title": "Full Stack Developer Intern",
+      "baselineScore": 85,
+      "breakdown": {
+        "overallScore": 85,
+        "keywordScore": 77,
+        "skillsScore": 83,
+        "experienceScore": 100,
+        "formattingScore": 96,
+        "readabilityScore": 65,
+        "detectedYearsExperience": 6,
+        "matchedKeywords": [
+          "full",
+          "stack",
+          "developer",
+          "intern",
+          "engineer",
+          "react",
+          "node",
+          "express",
+          "rest",
+          "apis"
+        ],
+        "missingKeywords": [
+          "software",
+          "typescript",
+          "database"
+        ],
+        "matchedSkills": [
+          "CSS3",
+          "Express.js",
+          "HTML5",
+          "Java",
+          "JavaScript",
+          "Machine Learning",
+          "MySQL",
+          "Next.js",
+          "Node.js",
+          "OAuth2 / OpenID",
+          "Product Management",
+          "REST APIs",
+          "React",
+          "Responsive Design",
+          "SQL",
+          "Tailwind CSS"
+        ]
+      },
+      "notes": "Source check captured from D:\\Project\\ShortlistIQ ATS Recruitment Platform\\apps\\api\\.data\\candidateChecks.json"
+    },
+    {
+      "id": "c41284c4-a9f2-4648-a805-8d1c58e9f683",
+      "type": "candidate_check",
+      "title": "Full Stack Developer Intern",
+      "baselineScore": 85,
+      "breakdown": {
+        "overallScore": 85,
+        "keywordScore": 77,
+        "skillsScore": 83,
+        "experienceScore": 100,
+        "formattingScore": 96,
+        "readabilityScore": 65,
+        "detectedYearsExperience": 6,
+        "matchedKeywords": [
+          "full",
+          "stack",
+          "developer",
+          "intern",
+          "engineer",
+          "react",
+          "node",
+          "express",
+          "rest",
+          "apis"
+        ],
+        "missingKeywords": [
+          "software",
+          "typescript",
+          "database"
+        ],
+        "matchedSkills": [
+          "CSS3",
+          "Express.js",
+          "HTML5",
+          "Java",
+          "JavaScript",
+          "Machine Learning",
+          "MySQL",
+          "Next.js",
+          "Node.js",
+          "OAuth2 / OpenID",
+          "Product Management",
+          "REST APIs",
+          "React",
+          "Responsive Design",
+          "SQL",
+          "Tailwind CSS"
+        ]
+      },
+      "notes": "Source check captured from D:\\Project\\ShortlistIQ ATS Recruitment Platform\\apps\\api\\.data\\candidateChecks.json"
+    },
+    {
+      "id": "59c975d4-0f55-41d0-bb1f-e75950cea70f",
+      "type": "candidate_check",
+      "title": "Target Position",
+      "baselineScore": 74,
+      "breakdown": {
+        "overallScore": 74,
+        "keywordScore": 64,
+        "skillsScore": 63,
+        "experienceScore": 100,
+        "formattingScore": 96,
+        "readabilityScore": 65,
+        "detectedYearsExperience": 6,
+        "matchedKeywords": [
+          "apis",
+          "design",
+          "using",
+          "full",
+          "stack",
+          "developer",
+          "web",
+          "applications",
+          "react",
+          "node",
+          "express",
+          "javascript",
+          "control",
+          "git",
+          "ai",
+          "workflows",
+          "engineering",
+          "hyderabad",
+          "india",
+          "backend",
+          "user",
+          "develop",
+          "next"
+        ],
+        "missingKeywords": [
+          "build",
+          "scalable",
+          "integrate",
+          "like",
+          "typescript",
+          "title",
+          "acme",
+          "tech",
+          "proactive",
+          "maintain",
+          "cross",
+          "functional",
+          "teams",
+          "architectures",
+          "intuitive",
+          "interfaces",
+          "robust"
+        ],
+        "matchedSkills": [
+          "CSS3",
+          "Express.js",
+          "HTML5",
+          "Java",
+          "JavaScript",
+          "Machine Learning",
+          "MySQL",
+          "Next.js",
+          "Node.js",
+          "OAuth2 / OpenID",
+          "Product Management",
+          "REST APIs",
+          "React",
+          "Responsive Design",
+          "SQL",
+          "Tailwind CSS"
+        ]
+      },
+      "notes": "Source check captured from D:\\Project\\ShortlistIQ ATS Recruitment Platform\\apps\\api\\.data\\candidateChecks.json"
+    },
+    {
+      "id": "baseline-sample-fullstack",
+      "type": "batch_candidate",
+      "title": "Full Stack Engineer (Mid-Level)",
+      "baselineScore": 94,
+      "breakdown": {
+        "overallScore": 94,
+        "keywordScore": 92,
+        "skillsScore": 100,
+        "experienceScore": 100,
+        "formattingScore": 76,
+        "readabilityScore": 85,
+        "detectedYearsExperience": 11,
+        "matchedKeywords": [
+          "full",
+          "stack",
+          "engineer",
+          "react",
+          "typescript",
+          "node",
+          "postgresql",
+          "docker",
+          "aws",
+          "apis",
+          "ci",
+          "cd"
+        ],
+        "missingKeywords": [
+          "rest"
+        ],
+        "matchedSkills": [
+          "AWS",
+          "CI/CD",
+          "Docker",
+          "Express.js",
+          "GitHub Actions",
+          "JavaScript",
+          "Microservices",
+          "Node.js",
+          "PostgreSQL",
+          "REST APIs",
+          "React",
+          "TypeScript"
+        ]
+      },
+      "notes": "Anchored baseline profile for scoring regression safety"
+    },
+    {
+      "id": "baseline-sample-entry-level",
+      "type": "batch_candidate",
+      "title": "Junior Frontend Developer",
+      "baselineScore": 78,
+      "breakdown": {
+        "overallScore": 78,
+        "keywordScore": 50,
+        "skillsScore": 100,
+        "experienceScore": 100,
+        "formattingScore": 61,
+        "readabilityScore": 85,
+        "detectedYearsExperience": 4,
+        "matchedKeywords": [
+          "javascript",
+          "react",
+          "html5",
+          "css3",
+          "git",
+          "responsive",
+          "design"
+        ],
+        "missingKeywords": [
+          "junior",
+          "frontend",
+          "developer",
+          "web",
+          "degree",
+          "cs",
+          "equivalent"
+        ],
+        "matchedSkills": [
+          "CSS3",
+          "HTML5",
+          "JavaScript",
+          "React",
+          "Responsive Design",
+          "Tailwind CSS"
+        ]
+      },
+      "notes": "Anchored baseline profile for scoring regression safety"
+    }
+  ]
+}

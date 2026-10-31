@@ -22,6 +22,7 @@ export const SKILL_DICTIONARY: SkillDefinition[] = [
   { canonical: 'Scala', aliases: ['scala'], category: 'Languages' },
   { canonical: 'R', aliases: ['r programming', 'r language', 'r stats'], category: 'Languages' },
   { canonical: 'SQL', aliases: ['sql', 't-sql', 'pl/sql', 'plsql'], category: 'Languages' },
+  { canonical: 'NoSQL', aliases: ['nosql', 'non-relational', 'document database'], category: 'Database' },
   { canonical: 'HTML5', aliases: ['html', 'html5'], category: 'Languages' },
   { canonical: 'CSS3', aliases: ['css', 'css3', 'scss', 'sass', 'less'], category: 'Languages' },
   { canonical: 'Bash', aliases: ['bash', 'shell script', 'shell scripting', 'zsh', 'powershell'], category: 'Languages' },

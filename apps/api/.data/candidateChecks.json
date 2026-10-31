@@ -1,0 +1,287 @@
+[
+  {
+    "id": "e706fee6-1ef4-4415-a90d-2ddb2f50bcb9",
+    "userId": null,
+    "anonToken": "seed-token",
+    "jobTitle": "Full Stack Developer Intern",
+    "company": "CHARANI INFOTECH PVT LTD",
+    "jdText": "Looking for a Full Stack Developer Intern or Software Engineer with React.js, Node.js, Express.js, TypeScript, REST APIs, and database experience.",
+    "resumeText": "Lokesh Kagitha\nAndhra Pradesh, India\n +91 7032817065 # kagithalokesh8@gmail.com ï LinkedIn § GitHub  Portfolio\nEducation\nSRI VASAVI INSTITUTE OF ENGINEERING & TECHNOLOGY 2022 – 2026\nB.Tech in CSE (Artificial Intelligence & Machine Learning) — CGPA: 8.0 Pedana, Andhra Pradesh\nSri Chaitanya Junior College 2020 – 2022\nIntermediate Education Gudivada, Andhra Pradesh\nSahayamatha EM High School 2020\nSecondary School Education Mudinepalli, Andhra Pradesh\nExperience\nCHARANI INFOTECH PVT LTD Feb 2026 – May 2026\nFull Stack Developer Intern Hyderabad, Telangana\n• Developed and contributed to full-stack web applications using React.js, Node.js, Express.js, Firebase, and REST APIs.\n• Contributed to enterprise HRM functionality involving employee management, attendance tracking, payroll workflows,\nnotifications, workflow automation, and role-based access control.\n• Worked on a production-oriented e-commerce platform by developing responsive UI components, integrating backend\nAPIs, and improving application performance.\nTechnical Skills\nLanguages: JavaScript, HTML5, CSS3, SQL, Java (Basic)\nFrontend: React.js, Next.js, Responsive UI Development, Tailwind CSS\nBackend: Node.js, Express.js, REST APIs\nDatabases: MySQL, Firebase\nAI & Automation: AI Chatbots, Automated AI Agents, Workflow Automation, Prompt Engineering, ChatGPT, Claude\nAI, Antigravity AI\nTools & Platforms: Git, GitHub, VS Code, Postman, Firebase, Cloudinary\nProjects\nPurnima Kalamkari | React.js, Node.js, Express.js, MySQL 2026\n• Built a mobile-first e-commerce storefront and secure admin dashboard with product catalogs, variants, image uploads,\nand WhatsApp-based ordering.\n• Implemented JWT authentication, bcrypt password hashing, Cloudinary media management, and REST APIs for secure\nproduct management.\n• Live Website: purnima-kalamkari\nLoki – AI Portfolio Companion | Next.js, React.js, AI APIs 2026\n• Developed an AI-powered portfolio assistant for conversational Q&A, project discovery, and contextual navigation.\n• Exploring voice interaction and automated AI agents to streamline visitor assistance and portfolio workflows.\n• Live Portfolio: lokeshkagitha.vercel.app\nJavaMentor | React.js, Node.js, Firebase 2026\n• Built a learning platform for Java full-stack development featuring authentication, coding practice, interview preparation,\nand progress tracking.\n• Designed a responsive user interface with reusable components, offline-support considerations, and a modular application\narchitecture.\nCertifications\n• Java Full Stack Development Certification – BISTS Technologies\n• Java Full Stack Developer Internship Certification – CHARANI INFOTECH PVT LTD",
+    "resumePath": null,
+    "scoreBefore": 85,
+    "scoreAfter": 85,
+    "breakdown": {
+      "overallScore": 85,
+      "keywordScore": 77,
+      "skillsScore": 83,
+      "experienceScore": 100,
+      "formattingScore": 96,
+      "readabilityScore": 65,
+      "detectedYearsExperience": 6,
+      "matchedKeywords": [
+        "full",
+        "stack",
+        "developer",
+        "intern",
+        "engineer",
+        "react",
+        "node",
+        "express",
+        "rest",
+        "apis"
+      ],
+      "missingKeywords": [
+        "software",
+        "typescript",
+        "database"
+      ],
+      "matchedSkills": [
+        "CSS3",
+        "Express.js",
+        "HTML5",
+        "Java",
+        "JavaScript",
+        "Machine Learning",
+        "MySQL",
+        "Next.js",
+        "Node.js",
+        "OAuth2 / OpenID",
+        "Product Management",
+        "REST APIs",
+        "React",
+        "Responsive Design",
+        "SQL",
+        "Tailwind CSS"
+      ],
+      "sectionsDetected": [
+        "experience",
+        "skills",
+        "education",
+        "summary",
+        "projects",
+        "certifications"
+      ],
+      "readability": {
+        "score": 65,
+        "readingEase": 12,
+        "averageSentenceLength": 7.6,
+        "wordCount": 342,
+        "sentenceCount": 45
+      },
+      "basics": {
+        "name": "Lokesh Kagitha",
+        "email": "kagithalokesh8@gmail.com",
+        "phone": "+91 7032817065",
+        "links": {
+          "linkedin": null,
+          "github": null,
+          "portfolio": null,
+          "all": []
+        }
+      }
+    },
+    "status": "completed",
+    "expiresAt": "2026-11-30T15:58:49.834Z",
+    "createdAt": "2026-10-31T15:58:49.834Z",
+    "updatedAt": "2026-10-31T15:58:49.834Z"
+  },
+  {
+    "id": "c41284c4-a9f2-4648-a805-8d1c58e9f683",
+    "userId": null,
+    "anonToken": "seed-token",
+    "jobTitle": "Full Stack Developer Intern",
+    "company": "CHARANI INFOTECH PVT LTD",
+    "jdText": "Looking for a Full Stack Developer Intern or Software Engineer with React.js, Node.js, Express.js, TypeScript, REST APIs, and database experience.",
+    "resumeText": "Lokesh Kagitha\nAndhra Pradesh, India\n +91 7032817065 # kagithalokesh8@gmail.com ï LinkedIn § GitHub  Portfolio\nEducation\nSRI VASAVI INSTITUTE OF ENGINEERING & TECHNOLOGY 2022 – 2026\nB.Tech in CSE (Artificial Intelligence & Machine Learning) — CGPA: 8.0 Pedana, Andhra Pradesh\nSri Chaitanya Junior College 2020 – 2022\nIntermediate Education Gudivada, Andhra Pradesh\nSahayamatha EM High School 2020\nSecondary School Education Mudinepalli, Andhra Pradesh\nExperience\nCHARANI INFOTECH PVT LTD Feb 2026 – May 2026\nFull Stack Developer Intern Hyderabad, Telangana\n• Developed and contributed to full-stack web applications using React.js, Node.js, Express.js, Firebase, and REST APIs.\n• Contributed to enterprise HRM functionality involving employee management, attendance tracking, payroll workflows,\nnotifications, workflow automation, and role-based access control.\n• Worked on a production-oriented e-commerce platform by developing responsive UI components, integrating backend\nAPIs, and improving application performance.\nTechnical Skills\nLanguages: JavaScript, HTML5, CSS3, SQL, Java (Basic)\nFrontend: React.js, Next.js, Responsive UI Development, Tailwind CSS\nBackend: Node.js, Express.js, REST APIs\nDatabases: MySQL, Firebase\nAI & Automation: AI Chatbots, Automated AI Agents, Workflow Automation, Prompt Engineering, ChatGPT, Claude\nAI, Antigravity AI\nTools & Platforms: Git, GitHub, VS Code, Postman, Firebase, Cloudinary\nProjects\nPurnima Kalamkari | React.js, Node.js, Express.js, MySQL 2026\n• Built a mobile-first e-commerce storefront and secure admin dashboard with product catalogs, variants, image uploads,\nand WhatsApp-based ordering.\n• Implemented JWT authentication, bcrypt password hashing, Cloudinary media management, and REST APIs for secure\nproduct management.\n• Live Website: purnima-kalamkari\nLoki – AI Portfolio Companion | Next.js, React.js, AI APIs 2026\n• Developed an AI-powered portfolio assistant for conversational Q&A, project discovery, and contextual navigation.\n• Exploring voice interaction and automated AI agents to streamline visitor assistance and portfolio workflows.\n• Live Portfolio: lokeshkagitha.vercel.app\nJavaMentor | React.js, Node.js, Firebase 2026\n• Built a learning platform for Java full-stack development featuring authentication, coding practice, interview preparation,\nand progress tracking.\n• Designed a responsive user interface with reusable components, offline-support considerations, and a modular application\narchitecture.\nCertifications\n• Java Full Stack Development Certification – BISTS Technologies\n• Java Full Stack Developer Internship Certification – CHARANI INFOTECH PVT LTD",
+    "resumePath": null,
+    "scoreBefore": 85,
+    "scoreAfter": 85,
+    "breakdown": {
+      "overallScore": 85,
+      "keywordScore": 77,
+      "skillsScore": 83,
+      "experienceScore": 100,
+      "formattingScore": 96,
+      "readabilityScore": 65,
+      "detectedYearsExperience": 6,
+      "matchedKeywords": [
+        "full",
+        "stack",
+        "developer",
+        "intern",
+        "engineer",
+        "react",
+        "node",
+        "express",
+        "rest",
+        "apis"
+      ],
+      "missingKeywords": [
+        "software",
+        "typescript",
+        "database"
+      ],
+      "matchedSkills": [
+        "CSS3",
+        "Express.js",
+        "HTML5",
+        "Java",
+        "JavaScript",
+        "Machine Learning",
+        "MySQL",
+        "Next.js",
+        "Node.js",
+        "OAuth2 / OpenID",
+        "Product Management",
+        "REST APIs",
+        "React",
+        "Responsive Design",
+        "SQL",
+        "Tailwind CSS"
+      ],
+      "sectionsDetected": [
+        "experience",
+        "skills",
+        "education",
+        "summary",
+        "projects",
+        "certifications"
+      ],
+      "readability": {
+        "score": 65,
+        "readingEase": 12,
+        "averageSentenceLength": 7.6,
+        "wordCount": 342,
+        "sentenceCount": 45
+      },
+      "basics": {
+        "name": "Lokesh Kagitha",
+        "email": "kagithalokesh8@gmail.com",
+        "phone": "+91 7032817065",
+        "links": {
+          "linkedin": null,
+          "github": null,
+          "portfolio": null,
+          "all": []
+        }
+      }
+    },
+    "status": "completed",
+    "expiresAt": "2026-11-30T15:58:49.834Z",
+    "createdAt": "2026-10-31T15:58:49.834Z",
+    "updatedAt": "2026-10-31T15:58:49.834Z"
+  },
+  {
+    "id": "59c975d4-0f55-41d0-bb1f-e75950cea70f",
+    "userId": null,
+    "anonToken": "anon-9htdw3slk-1793452168328",
+    "jobTitle": "Target Position",
+    "company": null,
+    "jdText": "Job Title: Full Stack Developer\r\nCompany: Acme Tech Solutions\r\nLocation: Hyderabad, India / Remote\r\n\r\nAbout the Role:\r\nWe are seeking a proactive Full Stack Developer to build and maintain modern web applications. You will collaborate with cross-functional teams to design scalable backend architectures and intuitive user interfaces.\r\n\r\nKey Responsibilities:\r\n- Develop robust, scalable web applications using React.js, Next.js, Node.js, and Express.js.\r\n- Design and integrate RESTful APIs and microservices.\r\n- Work with relational and NoSQL databases like PostgreSQL, MySQL, and Firebase.\r\n- Build responsive, mobile-first UI components with Tailwind CSS and modern JavaScript/TypeScript.\r\n- Implement secure authentication and authorization mechanisms (JWT, OAuth, role-based access control).\r\n- Manage CI/CD deployment pipelines using Git, GitHub Actions, and cloud services (AWS / Cloudinary / Vercel).\r\n- Integrate AI features, chatbots, or automated workflows using modern LLM APIs where relevant.\r\n\r\nRequirements:\r\n- Bachelor's degree in Computer Science, Engineering, or equivalent practical experience.\r\n- Strong proficiency in JavaScript (ES6+), TypeScript, HTML5, and CSS3.\r\n- Proven experience with React, Node.js, Express, and REST APIs.\r\n- Hands-on experience with database querying, schema design, and ORMs.\r\n- Familiarity with version control (Git) and API testing tools like Postman.\r\n- Experience with AI APIs, prompt engineering, or automation workflows is a strong plus.",
+    "resumeText": "Lokesh Kagitha\nAndhra Pradesh, India\n +91 7032817065 # kagithalokesh8@gmail.com ï LinkedIn § GitHub  Portfolio\nEducation\nSRI VASAVI INSTITUTE OF ENGINEERING & TECHNOLOGY 2022 – 2026\nB.Tech in CSE (Artificial Intelligence & Machine Learning) — CGPA: 8.0 Pedana, Andhra Pradesh\nSri Chaitanya Junior College 2020 – 2022\nIntermediate Education Gudivada, Andhra Pradesh\nSahayamatha EM High School 2020\nSecondary School Education Mudinepalli, Andhra Pradesh\nExperience\nCHARANI INFOTECH PVT LTD Feb 2026 – May 2026\nFull Stack Developer Intern Hyderabad, Telangana\n• Developed and contributed to full-stack web applications using React.js, Node.js, Express.js, Firebase, and REST APIs.\n• Contributed to enterprise HRM functionality involving employee management, attendance tracking, payroll workflows,\nnotifications, workflow automation, and role-based access control.\n• Worked on a production-oriented e-commerce platform by developing responsive UI components, integrating backend\nAPIs, and improving application performance.\nTechnical Skills\nLanguages: JavaScript, HTML5, CSS3, SQL, Java (Basic)\nFrontend: React.js, Next.js, Responsive UI Development, Tailwind CSS\nBackend: Node.js, Express.js, REST APIs\nDatabases: MySQL, Firebase\nAI & Automation: AI Chatbots, Automated AI Agents, Workflow Automation, Prompt Engineering, ChatGPT, Claude\nAI, Antigravity AI\nTools & Platforms: Git, GitHub, VS Code, Postman, Firebase, Cloudinary\nProjects\nPurnima Kalamkari | React.js, Node.js, Express.js, MySQL 2026\n• Built a mobile-first e-commerce storefront and secure admin dashboard with product catalogs, variants, image uploads,\nand WhatsApp-based ordering.\n• Implemented JWT authentication, bcrypt password hashing, Cloudinary media management, and REST APIs for secure\nproduct management.\n• Live Website: purnima-kalamkari\nLoki – AI Portfolio Companion | Next.js, React.js, AI APIs 2026\n• Developed an AI-powered portfolio assistant for conversational Q&A, project discovery, and contextual navigation.\n• Exploring voice interaction and automated AI agents to streamline visitor assistance and portfolio workflows.\n• Live Portfolio: lokeshkagitha.vercel.app\nJavaMentor | React.js, Node.js, Firebase 2026\n• Built a learning platform for Java full-stack development featuring authentication, coding practice, interview preparation,\nand progress tracking.\n• Designed a responsive user interface with reusable components, offline-support considerations, and a modular application\narchitecture.\nCertifications\n• Java Full Stack Development Certification – BISTS Technologies\n• Java Full Stack Developer Internship Certification – CHARANI INFOTECH PVT LTD",
+    "resumePath": "anon-9htdw3slk-1793452168328/f00c5941-d19e-48d4-89b4-90ec48ba87b9.pdf",
+    "scoreBefore": 74,
+    "scoreAfter": 74,
+    "breakdown": {
+      "overallScore": 74,
+      "keywordScore": 64,
+      "skillsScore": 63,
+      "experienceScore": 100,
+      "formattingScore": 96,
+      "readabilityScore": 65,
+      "detectedYearsExperience": 6,
+      "matchedKeywords": [
+        "apis",
+        "design",
+        "using",
+        "full",
+        "stack",
+        "developer",
+        "web",
+        "applications",
+        "react",
+        "node",
+        "express",
+        "javascript",
+        "control",
+        "git",
+        "ai",
+        "workflows",
+        "engineering",
+        "hyderabad",
+        "india",
+        "backend",
+        "user",
+        "develop",
+        "next"
+      ],
+      "missingKeywords": [
+        "build",
+        "scalable",
+        "integrate",
+        "like",
+        "typescript",
+        "title",
+        "acme",
+        "tech",
+        "proactive",
+        "maintain",
+        "cross",
+        "functional",
+        "teams",
+        "architectures",
+        "intuitive",
+        "interfaces",
+        "robust"
+      ],
+      "matchedSkills": [
+        "CSS3",
+        "Express.js",
+        "HTML5",
+        "Java",
+        "JavaScript",
+        "Machine Learning",
+        "MySQL",
+        "Next.js",
+        "Node.js",
+        "OAuth2 / OpenID",
+        "Product Management",
+        "REST APIs",
+        "React",
+        "Responsive Design",
+        "SQL",
+        "Tailwind CSS"
+      ],
+      "sectionsDetected": [
+        "experience",
+        "skills",
+        "education",
+        "summary",
+        "projects",
+        "certifications"
+      ],
+      "readability": {
+        "score": 65,
+        "readingEase": 12,
+        "averageSentenceLength": 7.6,
+        "wordCount": 342,
+        "sentenceCount": 45
+      },
+      "basics": {
+        "name": "Lokesh Kagitha",
+        "email": "kagithalokesh8@gmail.com",
+        "phone": "+91 7032817065",
+        "links": {
+          "linkedin": null,
+          "github": null,
+          "portfolio": null,
+          "all": []
+        }
+      }
+    },
+    "status": "completed",
+    "expiresAt": "2026-11-07T16:04:25.555Z",
+    "createdAt": "2026-10-31T16:04:25.555Z",
+    "updatedAt": "2026-10-31T16:04:25.555Z"
+  }
+]

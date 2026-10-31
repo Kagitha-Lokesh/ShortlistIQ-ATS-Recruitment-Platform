@@ -78,17 +78,17 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95">
+      <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+        <div className="bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden border border-border animate-in fade-in zoom-in-95">
           {/* Header */}
-          <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <div className="p-5 border-b border-border flex items-center justify-between bg-surface-subtle">
             <div>
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-brand-indigo" />
-                <h2 className="text-base font-bold text-slate-primary">Application Forms</h2>
+                <FileText className="w-4 h-4 text-brand" />
+                <h2 className="text-sm font-bold text-ink-primary">Application Forms</h2>
               </div>
-              <p className="text-xs text-slate-secondary mt-0.5">
-                Manage public candidate application forms for <span className="font-semibold text-slate-700">{batchName}</span>.
+              <p className="text-xs text-ink-secondary mt-0.5">
+                Manage public candidate application forms for <span className="font-semibold text-ink-primary">{batchName}</span>.
               </p>
             </div>
 
@@ -98,13 +98,13 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                   setFormToEdit(null);
                   setShowBuilderModal(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-brand-indigo text-white hover:bg-brand-hover transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-brand text-white hover:bg-brand-hover transition-colors shadow-2xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create Form
               </button>
-              <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-5 h-5" />
+              <button onClick={onClose} className="p-1 rounded text-ink-muted hover:text-ink-primary transition-colors">
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -117,10 +117,10 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                 <CardSkeleton />
               </div>
             ) : forms.length === 0 ? (
-              <div className="text-center py-12 px-4 border-2 border-dashed border-slate-200 rounded-lg">
-                <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                <h3 className="text-sm font-semibold text-slate-primary">No application forms created yet</h3>
-                <p className="text-xs text-slate-secondary max-w-md mx-auto mt-1 mb-4">
+              <div className="text-center py-12 px-4 border border-dashed border-border rounded-lg bg-surface-subtle">
+                <FileText className="w-10 h-10 text-ink-muted mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-ink-primary">No application forms created yet</h3>
+                <p className="text-xs text-ink-secondary max-w-md mx-auto mt-1 mb-4">
                   Create a public application form with custom screening questions and knockout rules to accept candidate
                   applications online.
                 </p>
@@ -129,7 +129,7 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                     setFormToEdit(null);
                     setShowBuilderModal(true);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded text-xs font-semibold bg-brand-indigo text-white hover:bg-brand-hover transition-colors shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded text-xs font-semibold bg-brand text-white hover:bg-brand-hover transition-colors shadow-2xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Create First Form
@@ -148,16 +148,16 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                   return (
                     <div
                       key={form.id}
-                      className="p-4 bg-white border border-slate-200 rounded-lg shadow-xs hover:border-slate-300 transition-colors space-y-3"
+                      className="p-4 bg-surface border border-border rounded-lg shadow-2xs hover:border-border-strong transition-colors space-y-3"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                         <div className="flex items-center gap-2.5">
-                          <h4 className="text-sm font-bold text-slate-primary">{form.title}</h4>
+                          <h4 className="text-sm font-bold text-ink-primary">{form.title}</h4>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
                               form.isPublished
-                                ? 'bg-emerald-50 text-state-success border border-emerald-200'
-                                : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-surface-subtle text-ink-muted border-border'
                             }`}
                           >
                             {form.isPublished ? 'Published (Accepting)' : 'Closed'}
@@ -168,10 +168,10 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                           <button
                             onClick={() => togglePublishMutation.mutate(form.id)}
                             disabled={togglePublishMutation.isPending}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors border shadow-2xs ${
                               form.isPublished
-                                ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200'
-                                : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+                                ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-200'
+                                : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'
                             }`}
                             title={form.isPublished ? 'Close form to stop new submissions' : 'Open form to accept submissions'}
                           >
@@ -184,7 +184,7 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                               setFormToEdit(form);
                               setShowBuilderModal(true);
                             }}
-                            className="p-1.5 text-slate-500 hover:text-brand-indigo hover:bg-slate-50 rounded border border-slate-200 transition-colors"
+                            className="p-1.5 text-ink-secondary hover:text-brand hover:bg-surface-hover rounded border border-border transition-colors shadow-2xs"
                             title="Edit Form Questions & Rules"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -196,7 +196,7 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                                 deleteFormMutation.mutate(form.id);
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-state-danger hover:bg-red-50 rounded border border-slate-200 transition-colors"
+                            className="p-1.5 text-ink-muted hover:text-state-danger hover:bg-red-50 rounded border border-border transition-colors shadow-2xs"
                             title="Delete Form"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -205,26 +205,26 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                       </div>
 
                       {/* Public URL Box */}
-                      <div className="flex items-center gap-2 bg-slate-50 p-2 rounded border border-slate-200">
-                        <span className="text-xs text-slate-400 shrink-0">Public URL:</span>
+                      <div className="flex items-center gap-2 bg-surface-subtle p-2 rounded border border-border">
+                        <span className="text-xs text-ink-muted shrink-0">Public Link:</span>
                         <input
                           type="text"
                           readOnly
                           value={publicUrl}
-                          className="w-full text-xs bg-transparent border-0 font-mono text-slate-700 focus:outline-none"
+                          className="w-full text-xs bg-transparent border-0 font-mono text-ink-primary focus:outline-none select-all"
                         />
                         <button
                           onClick={() => handleCopyLink(form.slug)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-surface border border-border text-ink-secondary hover:text-ink-primary hover:bg-surface-hover transition-colors shrink-0 shadow-2xs"
                         >
-                          {isCopied ? <Check className="w-3.5 h-3.5 text-state-success" /> : <Copy className="w-3.5 h-3.5" />}
+                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                           {isCopied ? 'Copied!' : 'Copy Link'}
                         </button>
                         <a
                           href={`/apply/${form.slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-1.5 text-slate-500 hover:text-brand-indigo transition-colors shrink-0"
+                          className="p-1.5 text-ink-secondary hover:text-brand transition-colors shrink-0"
                           title="Open public page in new tab"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -232,9 +232,9 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
                       </div>
 
                       {/* Stats */}
-                      <div className="flex items-center gap-4 text-xs text-slate-500 pt-1">
-                        <span className="flex items-center gap-1 font-semibold text-slate-700">
-                          <Users className="w-3.5 h-3.5 text-brand-indigo" />
+                      <div className="flex items-center gap-4 text-xs text-ink-secondary pt-1">
+                        <span className="flex items-center gap-1 font-semibold text-ink-primary">
+                          <Users className="w-3.5 h-3.5 text-brand" />
                           {form.submissionCount ?? 0} Submissions
                         </span>
                         <span>•</span>

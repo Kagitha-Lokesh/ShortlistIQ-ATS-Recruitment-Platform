@@ -319,6 +319,57 @@ export const checksApi = {
     document.body.removeChild(a);
   },
 
+  async getLatexSource(
+    checkId: string,
+    payload: { resumeData: ResumeData; options?: TemplateThemeOptions }
+  ): Promise<{ success: boolean; data: { latexSource: string } }> {
+    return apiClient<{ success: boolean; data: { latexSource: string } }>(`/api/v1/checks/${checkId}/export/latex-source`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async compileLatexPdf(
+    checkId: string,
+    payload: { latexSource?: string; resumeData?: ResumeData; options?: TemplateThemeOptions }
+  ): Promise<Blob> {
+    const res = await fetch(`/api/v1/checks/${checkId}/export/latex-pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-anon-token': anonTokenStorage.get()
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      let errorMsg = 'Failed to compile LaTeX resume';
+      try {
+        const errJson = await res.json() as { error?: { message?: string } };
+        if (errJson?.error?.message) errorMsg = errJson.error.message;
+      } catch { /* ignored */ }
+      throw new Error(errorMsg);
+    }
+
+    return res.blob();
+  },
+
+  async downloadLatexPdf(
+    checkId: string,
+    payload: { latexSource?: string; resumeData?: ResumeData; options?: TemplateThemeOptions },
+    filename = 'Resume_LaTeX.pdf'
+  ): Promise<void> {
+    const blob = await this.compileLatexPdf(checkId, payload);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
   // Phase 6 HR Batches & Candidates API Client Methods
   async getDashboard(): Promise<{
     stats: {
@@ -426,7 +477,7 @@ export const checksApi = {
   async updateCandidate(
     batchId: string,
     candidateId: string,
-    payload: { email?: string; fullName?: string; phone?: string; notes?: string; formAnswers?: any }
+    payload: { email?: string; fullName?: string; phone?: string; notes?: string; formAnswers?: any; criteriaResults?: any }
   ): Promise<any> {
     const res = await apiClient<{ success: boolean; data: any }>(
       `/api/v1/batches/${batchId}/candidates/${candidateId}`,

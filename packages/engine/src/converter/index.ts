@@ -43,6 +43,8 @@ function parseExperienceEntries(text: string): ExperienceItem[] {
   let currentHighlights: string[] = [];
 
   const datePattern = /(?:(20[0-2]\d|199\d)|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*(?:20[0-2]\d|199\d)?)\s*[-–—to]+\s*(?:(20[0-2]\d|199\d|present|current)|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*(?:20[0-2]\d|199\d)?)/i;
+  const isCompanyIndicator = /(PVT\s*LTD|LLC|INC\b|CORP\b|LIMITED|LTD\b|SOLUTIONS|TECHNOLOGIES|SYSTEMS|LABS|STUDIO|HOLDINGS|CO\b)/i;
+  const rolePattern = /^(.*?(?:Developer|Engineer|Manager|Specialist|Lead|Architect|Intern|Analyst|Director|Officer|Coordinator|Consultant|Scientist|Designer|Administrator|Executive|Associate|Fellow)(?:\s+Intern)?)(?:\s+(.*))?$/i;
 
   for (const line of lines) {
     const isBullet = /^[•*\-–—]/.test(line);
@@ -50,15 +52,16 @@ function parseExperienceEntries(text: string): ExperienceItem[] {
     const hasPipe = line.includes('|');
 
     // Header candidate (role title and company, e.g. "Senior Software Engineer | Apex Solutions (2020 - Present)")
-    if (!isBullet && (hasDate || hasPipe || entries.length === 0 && !currentEntry)) {
+    if (!isBullet && (hasDate || hasPipe || (entries.length === 0 && !currentEntry))) {
       if (currentEntry) {
         currentEntry.highlights = currentHighlights;
         entries.push(currentEntry as ExperienceItem);
         currentHighlights = [];
       }
 
-      let title = 'Software Engineer';
-      let company = 'Company';
+      let title = '';
+      let company = '';
+      let location = '';
       let startDate = '2020';
       let endDate = 'Present';
       let current = true;
@@ -74,36 +77,57 @@ function parseExperienceEntries(text: string): ExperienceItem[] {
       }
 
       // Extract title and company
-      const cleanHeader = line
+      let cleanHeader = line
         .replace(datePattern, '')
         .replace(/[()]/g, '')
         .trim();
 
       if (cleanHeader.includes('|')) {
         const parts = cleanHeader.split('|').map((s) => s.trim());
-        title = parts[0] || title;
-        company = parts[1] || company;
+        title = parts[0] || '';
+        company = parts[1] || '';
       } else if (cleanHeader.includes(' at ')) {
         const parts = cleanHeader.split(' at ').map((s) => s.trim());
-        title = parts[0] || title;
-        company = parts[1] || company;
+        title = parts[0] || '';
+        company = parts[1] || '';
       } else if (cleanHeader.includes(' - ')) {
         const parts = cleanHeader.split(' - ').map((s) => s.trim());
-        title = parts[0] || title;
-        company = parts[1] || company;
-      } else if (cleanHeader.length > 2) {
-        title = cleanHeader;
+        title = parts[0] || '';
+        company = parts[1] || '';
+      } else if (isCompanyIndicator.test(cleanHeader)) {
+        company = cleanHeader;
+      } else {
+        const roleM = cleanHeader.match(rolePattern);
+        if (roleM) {
+          title = roleM[1].trim();
+          if (roleM[2]) location = roleM[2].trim();
+        } else if (cleanHeader.length > 2) {
+          company = cleanHeader;
+        }
       }
 
       currentEntry = {
-        title,
-        company,
-        location: '',
+        title: title || 'Software Engineer',
+        company: company || 'Organization',
+        location,
         startDate,
         endDate,
         current,
         highlights: []
       };
+    } else if (currentEntry && !isBullet && currentHighlights.length === 0 && line.length < 120) {
+      // Subtitle line (e.g. "Full Stack Developer Intern Hyderabad, Telangana" or "Acme Corp, Remote")
+      const roleM = line.match(rolePattern);
+      if (roleM) {
+        currentEntry.title = roleM[1].trim();
+        if (roleM[2] && !currentEntry.location) {
+          currentEntry.location = roleM[2].trim();
+        }
+      } else if (isCompanyIndicator.test(line) && currentEntry.company === 'Organization') {
+        currentEntry.company = line;
+      } else if (!currentEntry.location && /^[A-Z][a-z]+/.test(line)) {
+        currentEntry.location = line;
+      }
     } else if (isBullet || currentEntry) {
       const cleanBullet = line.replace(/^[•*\-–—]\s*/, '').trim();
       if (cleanBullet.length > 0) {
@@ -145,42 +169,121 @@ function parseEducationEntries(text: string): EducationItem[] {
     .filter(Boolean);
 
   const entries: EducationItem[] = [];
+  const yearRangePattern = /\b(20[0-2]\d|199\d)\s*[-–—to]+\s*(20[0-2]\d|199\d|Present|Current)\b/i;
+  const singleYearPattern = /\b(20[0-2]\d|199\d)\b/;
+  const gpaPattern = /(?:CGPA|GPA|Percentage)\s*:?\s*(\d+(?:\.\d+)?(?:\s*\/\s*\d+)?%?)/i;
+  const isDegreeText = (s: string) => /(Intermediate\s+Education|Secondary\s+School\s+Education|High\s+School\s+Education|Education|Degree|Diploma|Certificate|B\.?\s*Tech|B\.?\s*E|B\.?\s*Sc|BCA|BBA|M\.?\s*Tech|M\.?\s*Sc|MCA|MBA|Bachelor|Master|Ph\.?D|Matriculation|10th|12th)/i.test(s);
+  const isInstText = (s: string) => /(Institute|University|College|School|Academy|Polytechnic|Vidyalaya|Campus)/i.test(s);
+  const isLocText = (s: string) => /^(Andhra Pradesh|Telangana|Karnataka|Maharashtra|Tamil Nadu|Delhi|India|USA|[A-Z][a-zA-Z\s]+,\s*[A-Z][a-zA-Z\s]+)$/i.test(s.trim());
+
+  let current: Partial<EducationItem> | null = null;
+  let pendingDate: { start?: string; end?: string } | null = null;
+
+  const pushCurrent = () => {
+    if (current && (current.institution || current.degree)) {
+      entries.push({
+        institution: current.institution || 'University',
+        degree: current.degree || '',
+        location: current.location || '',
+        startDate: current.startDate || '',
+        endDate: current.endDate || '',
+        gpa: current.gpa,
+        highlights: current.highlights || []
+      });
+    }
+    current = null;
+  };
 
   for (const line of lines) {
-    if (line.length < 5) continue;
+    if (line.length < 2) continue;
 
-    let degree = 'Degree in Field';
-    let institution = 'University / College';
-    let endDate = '';
+    const yrRange = line.match(yearRangePattern);
+    const yrSingle = line.match(singleYearPattern);
+    const isYearLine = yrRange && line.replace(yrRange[0], '').trim().length === 0;
+    const isSingleYearLine = yrSingle && line.replace(yrSingle[0], '').trim().length === 0;
 
-    const yearMatch = line.match(/\b(20[0-2]\d|199\d)\b/);
-    if (yearMatch) {
-      endDate = yearMatch[0];
+    // 1. Lone Year Line (e.g. "2022")
+    if (isYearLine || isSingleYearLine) {
+      const start = yrRange ? yrRange[1] : '';
+      const end = yrRange ? yrRange[2] : (yrSingle ? yrSingle[1] : '');
+      if (current && (current.institution || current.degree)) {
+        pushCurrent();
+      }
+      pendingDate = { start, end };
+      continue;
     }
 
-    const cleanLine = line.replace(/\b(20[0-2]\d|199\d)\b/g, '').replace(/[-–—()|]/g, ' ').trim();
+    // 2. Check for Institution
+    if (isInstText(line) && !isDegreeText(line)) {
+      if (current && current.institution) {
+        pushCurrent();
+      }
+      if (!current) {
+        current = {
+          startDate: pendingDate?.start || '',
+          endDate: pendingDate?.end || '',
+          highlights: []
+        };
+        pendingDate = null;
+      }
+      current.institution = line.replace(/[-–—|()]/g, ' ').trim();
+      continue;
+    }
 
-    if (line.includes('|')) {
-      const parts = line.split('|').map((s) => s.trim());
-      degree = parts[0] || degree;
-      institution = parts[1]?.replace(/\b(20[0-2]\d|199\d)\b.*$/, '').trim() || institution;
-    } else if (line.includes(',')) {
-      const parts = line.split(',').map((s) => s.trim());
-      degree = parts[0] || degree;
-      institution = parts[1]?.trim() || institution;
+    // 3. Check for Degree / Qualification
+    if (isDegreeText(line)) {
+      if (current && current.degree) {
+        pushCurrent();
+      }
+      if (!current) {
+        current = {
+          startDate: pendingDate?.start || '',
+          endDate: pendingDate?.end || '',
+          highlights: []
+        };
+        pendingDate = null;
+      }
+
+      let degLine = line;
+      const gpaM = degLine.match(gpaPattern);
+      if (gpaM) {
+        current.gpa = gpaM[1];
+        degLine = degLine.replace(gpaM[0], '').trim();
+      }
+      current.degree = degLine.replace(/[-–—|()]+$/, '').trim();
+      continue;
+    }
+
+    // 4. Check for Location
+    if (isLocText(line)) {
+      if (current) {
+        current.location = current.location ? `${current.location}, ${line}` : line;
+      }
+      continue;
+    }
+
+    // 5. Fallback line handling
+    if (current) {
+      if (!current.degree && !isInstText(line)) {
+        current.degree = line;
+      } else if (!current.location) {
+        current.location = line;
+      } else {
+        current.highlights = current.highlights || [];
+        current.highlights.push(line);
+      }
     } else {
-      degree = cleanLine;
+      current = {
+        institution: line,
+        startDate: pendingDate?.start || '',
+        endDate: pendingDate?.end || '',
+        highlights: []
+      };
+      pendingDate = null;
     }
-
-    entries.push({
-      degree,
-      institution,
-      location: '',
-      startDate: '',
-      endDate,
-      highlights: []
-    });
   }
+
+  pushCurrent();
 
   return entries.length > 0
     ? entries
