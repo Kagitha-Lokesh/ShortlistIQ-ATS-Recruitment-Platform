@@ -7,14 +7,15 @@ import {
   CheckCircle2,
   Briefcase,
   Building,
-  Loader2,
   Clock,
   ArrowRight
 } from 'lucide-react';
-import { checksApi, CandidateCheckData, ApiError } from '../../lib/api';
+import { checksApi, CandidateCheckData } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { saveAtsCheck, getRecentAtsChecks, StoredAtsCheckSummary } from '../../lib/atsStorage';
+import { getRecentAtsChecks, StoredAtsCheckSummary } from '../../lib/atsStorage';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
 
 export const CheckerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -100,89 +101,57 @@ export const CheckerPage: React.FC = () => {
       setErrorMessage('Please upload a PDF resume file.');
       return;
     }
-
     if (!jdText.trim() || jdText.trim().length < 30) {
-      setErrorMessage('Please provide a job description of at least 30 characters.');
+      setErrorMessage('Please provide a complete Job Description (minimum 30 characters).');
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
+      setIsSubmitting(true);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('resume', file);
       formData.append('jdText', jdText.trim());
-      formData.append('turnstileToken', 'mock-turnstile-pass');
       if (jobTitle.trim()) formData.append('jobTitle', jobTitle.trim());
       if (company.trim()) formData.append('company', company.trim());
 
       const res = await checksApi.createCheck(formData);
-
-      // Save complete check data to localStorage for instant recovery and offline caching
-      saveAtsCheck({
-        id: res.data.id,
-        createdAt: res.data.createdAt,
-        jobTitle: res.data.jobTitle,
-        company: res.data.company,
-        scoreBefore: res.data.scoreBefore,
-        scoreAfter: res.data.scoreAfter,
-        breakdown: res.data.breakdown,
-        resumeText: res.data.resumeText,
-        jdText: res.data.jdText || jdText,
-        candidateName: (res.data.breakdown as any)?.candidateName || 'Candidate',
-        suggestions: res.data.suggestions || []
-      });
-
-      addToast('success', 'Resume analyzed successfully!');
+      addToast('success', 'Resume parsed and scored successfully!');
       navigate(`/checks/${res.data.id}`);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.code === 'NO_TEXT') {
-          setErrorMessage(
-            'The uploaded PDF contains no extractable text. Scanned images are not supported. Please upload a standard text-based PDF resume.'
-          );
-        } else if (err.code === 'RATE_LIMIT_EXCEEDED') {
-          setErrorMessage(err.message);
-        } else {
-          setErrorMessage(err.message || 'An error occurred while evaluating your resume.');
-        }
-      } else {
-        setErrorMessage('Unable to process resume. Please check your network connection.');
-      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to process resume check. Please retry.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-primary">ATS Resume Checker</h1>
-        <p className="text-sm text-slate-secondary mt-1">
-          Upload your text-based resume and target job description to get a deterministic ATS compatibility score and actionable keyword suggestions.
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Page Title & Intro */}
+      <div className="text-center space-y-1.5 pb-2">
+        <h1 className="text-2xl font-bold tracking-tight text-ink-primary">
+          ATS Resume Checker & Keyword Matcher
+        </h1>
+        <p className="text-xs text-ink-secondary max-w-xl mx-auto leading-relaxed">
+          Screen your resume deterministically against any job description. Check extractability, formatting compliance, and missing core skills.
         </p>
       </div>
 
       {errorMessage && (
-        <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-state-danger flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <span className="font-semibold block mb-0.5">Evaluation Error</span>
-            {errorMessage}
-          </div>
+        <div className="p-3 bg-red-50 border border-red-200 rounded text-xs text-state-danger flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-state-danger shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Main Checker Form */}
-      <form onSubmit={handleSubmit} className="bg-card border border-slate-border rounded-lg shadow-soft p-6 space-y-6">
+      {/* Main Upload & Job Form */}
+      <form onSubmit={handleSubmit} className="bg-surface border border-border rounded-md shadow-subtle p-6 space-y-5">
         {/* Step 1: Upload Resume */}
         <div>
-          <label className="block text-sm font-semibold text-slate-primary mb-1.5">
+          <label className="block text-xs font-semibold text-ink-primary mb-1">
             1. Upload Resume (PDF Only) <span className="text-state-danger">*</span>
           </label>
-          <p className="text-xs text-slate-secondary mb-3">
-            Only text-based PDFs are supported. Scanned images or password-protected files will be rejected.
+          <p className="text-xs text-ink-muted mb-2.5">
+            Only text-based PDFs are supported. Scanned images or password-protected files cannot be extracted.
           </p>
 
           <input
@@ -203,29 +172,29 @@ export const CheckerPage: React.FC = () => {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              className={`border border-dashed rounded p-7 text-center cursor-pointer transition-colors ${
                 isDragging
-                  ? 'border-brand-indigo bg-indigo-50/50'
-                  : 'border-slate-border hover:border-slate-400 bg-slate-50/50'
+                  ? 'border-primary bg-surface-subtle'
+                  : 'border-border hover:border-border-strong bg-surface-subtle/50'
               }`}
             >
-              <div className="w-12 h-12 mx-auto rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-brand-indigo mb-3">
-                <UploadCloud className="w-6 h-6" />
+              <div className="w-10 h-10 mx-auto rounded-full bg-surface border border-border flex items-center justify-center text-ink-muted mb-2.5">
+                <UploadCloud className="w-5 h-5 text-ink-primary" />
               </div>
-              <p className="text-sm font-medium text-slate-primary">
-                Drag and drop your PDF resume here, or <span className="text-brand-indigo underline">browse files</span>
+              <p className="text-xs font-medium text-ink-primary">
+                Drag and drop your PDF resume here, or <span className="text-brand-accent underline">browse files</span>
               </p>
-              <p className="text-xs text-slate-muted mt-1.5">Maximum file size: 5 MB</p>
+              <p className="text-[11px] text-ink-muted mt-1 font-mono">Maximum file size: 5 MB</p>
             </div>
           ) : (
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-border rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded bg-emerald-50 border border-emerald-100 flex items-center justify-center text-state-success">
-                  <FileText className="w-5 h-5" />
+            <div className="flex items-center justify-between p-3 bg-surface-subtle border border-border rounded">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+                  <FileText className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-primary truncate max-w-sm">{file.name}</p>
-                  <p className="text-xs text-slate-secondary">{(file.size / 1024).toFixed(1)} KB</p>
+                  <p className="text-xs font-semibold text-ink-primary truncate max-w-sm">{file.name}</p>
+                  <p className="text-[11px] text-ink-muted font-mono">{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
               <button
@@ -242,32 +211,32 @@ export const CheckerPage: React.FC = () => {
         {/* Step 2: Target Job Details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-secondary mb-1">
+            <label className="block text-xs font-semibold text-ink-primary mb-1">
               Target Job Title (Optional)
             </label>
             <div className="relative">
-              <Briefcase className="w-4 h-4 text-slate-muted absolute left-3 top-2.5" />
+              <Briefcase className="w-3.5 h-3.5 text-ink-muted absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="e.g. Senior Full Stack Engineer"
+                placeholder="e.g. Senior Backend Engineer"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full text-sm pl-9 pr-3 py-2 rounded border border-slate-border bg-white text-slate-primary focus:outline-none focus:ring-1 focus:ring-brand-indigo"
+                className="w-full text-xs pl-8 pr-3 py-2 rounded border border-border bg-surface text-ink-primary focus:outline-none focus:border-primary"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-secondary mb-1">
+            <label className="block text-xs font-semibold text-ink-primary mb-1">
               Company Name (Optional)
             </label>
             <div className="relative">
-              <Building className="w-4 h-4 text-slate-muted absolute left-3 top-2.5" />
+              <Building className="w-3.5 h-3.5 text-ink-muted absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="e.g. Stripe, Acme Corp"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="w-full text-sm pl-9 pr-3 py-2 rounded border border-slate-border bg-white text-slate-primary focus:outline-none focus:ring-1 focus:ring-brand-indigo"
+                className="w-full text-xs pl-8 pr-3 py-2 rounded border border-border bg-surface text-ink-primary focus:outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -275,94 +244,80 @@ export const CheckerPage: React.FC = () => {
 
         {/* Step 3: Paste Job Description */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-sm font-semibold text-slate-primary">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-semibold text-ink-primary">
               2. Paste Job Description <span className="text-state-danger">*</span>
             </label>
-            <span className={`text-xs ${jdText.length >= 30 ? 'text-state-success' : 'text-slate-muted'}`}>
+            <span className={`text-[11px] font-mono ${jdText.length >= 30 ? 'text-state-success' : 'text-ink-muted'}`}>
               {jdText.length} characters (min. 30)
             </span>
           </div>
           <textarea
             rows={7}
-            placeholder="Paste the full job posting requirements, responsibilities, and qualifications here..."
+            placeholder="Paste the full job requirements, responsibilities, and qualifications text..."
             value={jdText}
             onChange={(e) => setJdText(e.target.value)}
-            className="w-full text-sm p-3 rounded-lg border border-slate-border bg-white text-slate-primary font-mono focus:outline-none focus:ring-1 focus:ring-brand-indigo"
+            className="w-full text-xs p-3 rounded border border-border bg-surface text-ink-primary font-mono focus:outline-none focus:border-primary leading-relaxed"
           />
         </div>
 
         {/* Submit Button */}
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-slate-secondary flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-state-success" />
-            <span>Strict privacy: Resumes auto-deleted after 30 days. No training data reuse.</span>
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border">
+          <div className="text-[11px] text-ink-muted flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-state-success shrink-0" />
+            <span>Strict privacy: Resumes auto-expire. No training data reuse.</span>
           </div>
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
             disabled={isSubmitting || !file || jdText.trim().length < 30}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            isLoading={isSubmitting}
+            rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Parsing & Scoring Resume...
-              </>
-            ) : (
-              <>
-                Check ATS Compatibility
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+            Check ATS Alignment
+          </Button>
         </div>
       </form>
 
-      {/* Recent Resume Checks History (from LocalStorage and Account) */}
+      {/* Recent Resume Checks History */}
       {(pastChecks.length > 0 || profile) && (
-        <div className="mt-12">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-slate-secondary" />
-            <h2 className="text-base font-semibold text-slate-primary">Your Recent Resume Checks</h2>
+        <div className="mt-8 space-y-3">
+          <div className="flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-ink-muted" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-ink-primary">Your Recent Resume Checks</h2>
           </div>
 
           {isLoadingPast && pastChecks.length === 0 ? (
-            <div className="p-6 bg-card border border-slate-border rounded-lg text-center text-xs text-slate-secondary">
-              Loading your previous analyses...
+            <div className="p-4 bg-surface border border-border rounded text-center text-xs text-ink-muted">
+              Loading previous checks...
             </div>
           ) : pastChecks.length === 0 ? (
-            <div className="p-6 bg-card border border-slate-border rounded-lg text-center text-xs text-slate-secondary">
-              No previous resume checks recorded yet. Run your first check above!
+            <div className="p-4 bg-surface border border-border rounded text-center text-xs text-ink-muted">
+              No previous checks found. Run your first check above!
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pastChecks.map((check) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {pastChecks.map((c) => (
                 <Link
-                  key={check.id}
-                  to={`/checks/${check.id}`}
-                  className="bg-card border border-slate-border rounded-lg p-4 shadow-soft hover:border-brand-indigo transition-colors flex items-center justify-between"
+                  key={c.id}
+                  to={`/checks/${c.id}`}
+                  className="bg-surface border border-border rounded p-3.5 shadow-subtle hover:border-border-strong transition-colors flex items-center justify-between"
                 >
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-primary">{check.jobTitle}</h3>
-                    <p className="text-xs text-slate-secondary mt-0.5">
-                      {check.company ? `${check.company} • ` : ''}
-                      {new Date(check.createdAt).toLocaleDateString()}
+                    <h3 className="text-xs font-semibold text-ink-primary">{c.jobTitle}</h3>
+                    <p className="text-[11px] text-ink-muted mt-0.5 font-mono">
+                      {c.company ? `${c.company} • ` : ''}
+                      {new Date(c.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <span
-                      className={`inline-block px-2.5 py-0.5 text-xs font-bold rounded-full ${
-                        (check.scoreBefore ?? 0) >= 75
-                          ? 'bg-emerald-50 text-state-success border border-emerald-200'
-                          : (check.scoreBefore ?? 0) >= 50
-                          ? 'bg-amber-50 text-state-warning border border-amber-200'
-                          : 'bg-red-50 text-state-danger border border-red-200'
-                      }`}
+                    <Badge
+                      variant={(c.scoreBefore ?? 0) >= 75 ? 'shortlisted' : (c.scoreBefore ?? 0) >= 50 ? 'needs_review' : 'dealbreaker'}
+                      size="sm"
                     >
-                      {check.scoreBefore ?? 0}/100
-                    </span>
-                    <p className="text-[10px] text-slate-muted mt-1">View Results</p>
+                      {c.scoreBefore ?? 0}/100
+                    </Badge>
                   </div>
                 </Link>
               ))}
