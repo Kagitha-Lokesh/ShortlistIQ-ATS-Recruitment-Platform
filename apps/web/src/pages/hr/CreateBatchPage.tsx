@@ -10,7 +10,11 @@ import {
   ArrowRight,
   ArrowLeft,
   Save,
-  FileText
+  FileText,
+  AlertTriangle,
+  Info,
+  Sparkles,
+  Server
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button.js';
 import { Badge } from '../../components/ui/Badge.js';
@@ -32,10 +36,24 @@ export const CreateBatchPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // JD Quality Warnings
+  const jdWarnings: string[] = [];
+  if (jdText.trim()) {
+    if (jdText.length < 200) {
+      jdWarnings.push('Job description is unusually short (< 200 characters). May result in generic match evaluation.');
+    }
+    if (!/(skill|experience|responsibilit|requirement|qualification)/i.test(jdText)) {
+      jdWarnings.push('No obvious requirements or skills headers detected. Consider listing concrete competencies.');
+    }
+    if (/fast-paced|rockstar|ninja|guru|wear many hats/i.test(jdText)) {
+      jdWarnings.push('Contains ambiguous buzzwords ("ninja", "rockstar", "fast-paced") that reduce scoring precision.');
+    }
+  }
+
   // Helper to persist batch or update existing draft
   const persistBatch = async (status: 'draft' | 'active' = 'draft'): Promise<string> => {
     if (!name.trim() || !jobTitle.trim() || !jdText.trim()) {
-      throw new Error('Please fill in Batch Name, Job Title, and Job Description.');
+      throw new Error('Please fill in Batch Campaign Name, Target Job Title, and Job Description.');
     }
 
     if (batchId) {
@@ -75,7 +93,7 @@ export const CreateBatchPage: React.FC = () => {
 
   const handleNextFromStep1 = async () => {
     if (!name.trim() || !jobTitle.trim() || !jdText.trim()) {
-      setErrorMsg('Please enter Batch Name, Job Title, and Job Description.');
+      setErrorMsg('Please enter Batch Campaign Name, Target Job Title, and Job Description.');
       return;
     }
     setErrorMsg(null);
@@ -85,7 +103,7 @@ export const CreateBatchPage: React.FC = () => {
       }
       setCurrentStep(2);
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Error creating batch.');
+      setErrorMsg(err?.message || 'Error initializing batch draft.');
     }
   };
 
@@ -96,7 +114,7 @@ export const CreateBatchPage: React.FC = () => {
       const id = await persistBatch('active');
       navigate(`/hr/batches/${id}`);
     } catch (err: any) {
-      setErrorMsg(err?.message || 'Failed to activate batch.');
+      setErrorMsg(err?.message || 'Failed to launch screening batch.');
       setIsSubmitting(false);
     }
   };
@@ -118,7 +136,7 @@ export const CreateBatchPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Header */}
-      <div className="flex items-center justify-between border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-xl font-bold text-ink-primary">Create Screening Batch</h1>
           <p className="text-xs text-ink-secondary mt-0.5">
@@ -139,7 +157,7 @@ export const CreateBatchPage: React.FC = () => {
       </div>
 
       {/* Stepper Progress */}
-      <div className="grid grid-cols-4 gap-2.5 text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
         {[
           { step: 1, label: '1. Role Details', icon: Briefcase },
           { step: 2, label: '2. Cutoff & Criteria', icon: Sliders },
@@ -148,32 +166,38 @@ export const CreateBatchPage: React.FC = () => {
         ].map(({ step, label, icon: Icon }) => (
           <div
             key={step}
-            className={`p-2.5 rounded-md border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
+            className={`p-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
               currentStep === step
-                ? 'border-primary bg-slate-100 text-ink-primary font-semibold'
+                ? 'border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary/20'
                 : currentStep > step
-                ? 'border-emerald-200 bg-emerald-50 text-state-success'
+                ? 'border-emerald-200 bg-emerald-50 text-status-shortlist-text'
                 : 'border-border bg-surface text-ink-muted'
             }`}
           >
-            <Icon className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{label}</span>
+            <Icon className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{label}</span>
           </div>
         ))}
       </div>
 
       {errorMsg && (
-        <div className="p-3 bg-red-50 border border-red-200 text-state-danger rounded-md text-xs">
-          {errorMsg}
+        <div className="p-3.5 bg-red-50 border border-red-200 text-status-danger-text rounded-xl text-xs flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Step 1: Job Details */}
       {currentStep === 1 && (
-        <div className="bg-surface border border-border rounded-md p-6 space-y-5 shadow-subtle">
-          <h2 className="text-sm font-semibold text-ink-primary border-b border-border pb-3">
-            Step 1: Role Specifications
-          </h2>
+        <div className="bg-surface border border-border rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="border-b border-border pb-3">
+            <h2 className="text-sm font-bold text-ink-primary">
+              Step 1: Role Specifications & Description
+            </h2>
+            <p className="text-xs text-ink-secondary mt-0.5">
+              The engine extracts required skills, experience thresholds, and evaluation criteria directly from this text.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -185,7 +209,7 @@ export const CreateBatchPage: React.FC = () => {
                 placeholder="e.g. Q4 Senior Backend Engineers"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-border rounded focus:border-primary focus:outline-none bg-surface"
+                className="w-full text-xs px-3.5 py-2.5 border border-border rounded-lg focus:border-primary focus:outline-none bg-surface text-ink-primary"
               />
             </div>
 
@@ -198,18 +222,18 @@ export const CreateBatchPage: React.FC = () => {
                 placeholder="e.g. Senior Backend Engineer"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-border rounded focus:border-primary focus:outline-none bg-surface"
+                className="w-full text-xs px-3.5 py-2.5 border border-border rounded-lg focus:border-primary focus:outline-none bg-surface text-ink-primary"
               />
             </div>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-semibold text-ink-primary">
                 Job Description & Requirements *
               </label>
-              <label className="text-[11px] text-brand-accent hover:underline cursor-pointer flex items-center gap-1 font-medium">
-                <FileText className="w-3 h-3" />
+              <label className="text-[11px] text-primary hover:underline cursor-pointer flex items-center gap-1 font-medium">
+                <FileText className="w-3.5 h-3.5" />
                 Upload Text File (.txt)
                 <input
                   type="file"
@@ -220,13 +244,28 @@ export const CreateBatchPage: React.FC = () => {
               </label>
             </div>
             <textarea
-              rows={8}
-              placeholder="Paste the full job description text: responsibilities, must-have skills, preferred experience..."
+              rows={9}
+              placeholder="Paste the full job description text: responsibilities, must-have skills, preferred experience, required qualifications..."
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
-              className="w-full text-xs p-3 border border-border rounded focus:border-primary focus:outline-none font-mono leading-relaxed bg-surface"
+              className="w-full text-xs p-3.5 border border-border rounded-lg focus:border-primary focus:outline-none font-mono leading-relaxed bg-surface text-ink-primary"
             />
           </div>
+
+          {/* Real-time JD Quality Feedback */}
+          {jdWarnings.length > 0 && (
+            <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5 text-xs text-amber-900">
+              <div className="font-semibold flex items-center gap-1.5 text-amber-950">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                Job Description Quality Suggestions
+              </div>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] pl-1">
+                {jdWarnings.map((w, idx) => (
+                  <li key={idx}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="flex justify-end pt-4 border-t border-border">
             <Button
@@ -234,7 +273,7 @@ export const CreateBatchPage: React.FC = () => {
               rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               onClick={handleNextFromStep1}
             >
-              Continue to Criteria
+              Continue to Cutoff & Criteria
             </Button>
           </div>
         </div>
@@ -242,24 +281,29 @@ export const CreateBatchPage: React.FC = () => {
 
       {/* Step 2: Scoring Criteria */}
       {currentStep === 2 && (
-        <div className="bg-surface border border-border rounded-md p-6 space-y-6 shadow-subtle">
-          <h2 className="text-sm font-semibold text-ink-primary border-b border-border pb-3">
-            Step 2: Qualification Cutoff & Match Logic
-          </h2>
+        <div className="bg-surface border border-border rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="border-b border-border pb-3">
+            <h2 className="text-sm font-bold text-ink-primary">
+              Step 2: Qualification Cutoff & Deterministic Rules
+            </h2>
+            <p className="text-xs text-ink-secondary mt-0.5">
+              Set the qualification bar. Candidates at or above the cutoff are marked as Shortlisted; borderline candidates are flagged for human review.
+            </p>
+          </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-semibold text-ink-primary">
                   Qualification Cutoff Benchmark
                 </label>
-                <span className="text-sm font-bold text-ink-primary px-2.5 py-0.5 rounded bg-surface-subtle border border-border tabular-nums">
-                  {cutoff}%
+                <span className="text-sm font-bold text-ink-primary px-3 py-1 rounded-lg bg-surface-muted border border-border tabular-nums">
+                  {cutoff}% Match
                 </span>
               </div>
-              <p className="text-[11px] text-ink-secondary mb-3">
-                Candidates scoring at or above this threshold receive a <strong>Shortlisted</strong> recommendation.
-                Borderline candidates (within 5 points) are marked for <strong>Needs Review</strong>.
+              <p className="text-xs text-ink-secondary mb-3 leading-relaxed">
+                Candidates scoring at or above this threshold receive a <strong className="text-status-shortlist-text">Shortlisted</strong> recommendation.
+                Borderline candidates (within 5 points) are placed in <strong className="text-status-review-text">Needs Review</strong> with an explicit reason for recruiter discretion.
               </p>
               <input
                 type="range"
@@ -267,23 +311,23 @@ export const CreateBatchPage: React.FC = () => {
                 max={95}
                 value={cutoff}
                 onChange={(e) => setCutoff(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                className="w-full h-2 bg-surface-muted rounded-lg appearance-none cursor-pointer accent-primary"
               />
-              <div className="flex justify-between text-[10px] text-ink-muted mt-1 tabular-nums">
-                <span>40% (Lenient)</span>
-                <span>70% (Standard)</span>
-                <span>95% (Strict)</span>
+              <div className="flex justify-between text-[11px] text-ink-muted mt-1.5 tabular-nums">
+                <span>40% (Lenient Screening)</span>
+                <span>70% (Standard Benchmark)</span>
+                <span>95% (Strict Knockout)</span>
               </div>
             </div>
 
-            <div className="bg-surface-subtle border border-border rounded p-4 space-y-1.5">
+            <div className="bg-surface-subtle border border-border rounded-xl p-4 space-y-2">
               <div className="flex items-center gap-2 text-ink-primary font-semibold text-xs">
                 <Sliders className="w-4 h-4 text-primary" />
-                Deterministic Scoring & Verbatim Evidence
+                Deterministic Scoring & Verbatim Evidence Guarantee
               </div>
               <p className="text-xs text-ink-secondary leading-relaxed">
                 The engine evaluates requirements by grounding matches against verifiable resume snippets.
-                Dealbreaker rules, knockout criteria, and customized must-have weights can be managed from the batch criteria drawer.
+                Dealbreaker rules, knockout criteria, and customized must-have weights can be further fine-tuned in the Criteria Builder drawer after launch.
               </p>
             </div>
           </div>
@@ -302,7 +346,7 @@ export const CreateBatchPage: React.FC = () => {
               rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               onClick={() => setCurrentStep(3)}
             >
-              Continue to Resumes Upload
+              Continue to Bulk Upload
             </Button>
           </div>
         </div>
@@ -310,16 +354,14 @@ export const CreateBatchPage: React.FC = () => {
 
       {/* Step 3: Add Candidates / Bulk Upload */}
       {currentStep === 3 && (
-        <div className="bg-surface border border-border rounded-md p-6 space-y-6 shadow-subtle">
-          <div className="border-b border-border pb-3 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-ink-primary">
-                Step 3: Bulk Upload Candidate Resumes
-              </h2>
-              <p className="text-xs text-ink-secondary mt-0.5">
-                Upload candidate PDF resumes. Engine parses text, reconstructs reading order, and evaluates match criteria.
-              </p>
-            </div>
+        <div className="bg-surface border border-border rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="border-b border-border pb-3">
+            <h2 className="text-sm font-bold text-ink-primary">
+              Step 3: Bulk Upload Candidate Resumes
+            </h2>
+            <p className="text-xs text-ink-secondary mt-0.5">
+              Upload candidate PDF resumes. The engine reconstructs reading order, parses text, and matches requirements.
+            </p>
           </div>
 
           <BulkUploader
@@ -342,7 +384,7 @@ export const CreateBatchPage: React.FC = () => {
               rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
               onClick={() => setCurrentStep(4)}
             >
-              Review & Finalize
+              Review Batch & Launch
             </Button>
           </div>
         </div>
@@ -350,19 +392,24 @@ export const CreateBatchPage: React.FC = () => {
 
       {/* Step 4: Review and Finalize */}
       {currentStep === 4 && (
-        <div className="bg-surface border border-border rounded-md p-6 space-y-6 shadow-subtle">
-          <h2 className="text-sm font-semibold text-ink-primary border-b border-border pb-3">
-            Step 4: Review Batch Specifications
-          </h2>
+        <div className="bg-surface border border-border rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="border-b border-border pb-3">
+            <h2 className="text-sm font-bold text-ink-primary">
+              Step 4: Review Batch Specifications
+            </h2>
+            <p className="text-xs text-ink-secondary mt-0.5">
+              Confirm your screening parameters before activating the batch pipeline.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="p-4 bg-surface-subtle rounded border border-border space-y-2">
+            <div className="p-4 bg-surface-subtle rounded-xl border border-border space-y-2">
               <span className="text-ink-muted font-medium block">Job Details</span>
               <div className="text-sm font-bold text-ink-primary">{name}</div>
               <div className="text-ink-secondary">{jobTitle}</div>
             </div>
 
-            <div className="p-4 bg-surface-subtle rounded border border-border space-y-2">
+            <div className="p-4 bg-surface-subtle rounded-xl border border-border space-y-2">
               <span className="text-ink-muted font-medium block">Scoring & Candidates</span>
               <div className="flex items-center justify-between">
                 <span className="text-ink-secondary">Cutoff Threshold:</span>
@@ -375,9 +422,12 @@ export const CreateBatchPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-amber-50/70 border border-amber-200 rounded text-xs text-amber-900 leading-relaxed">
-            <strong>Ready to launch:</strong> Activating this batch triggers background text reconstruction and evaluation across all resumes.
-            Processing runs continuously on the server worker without requiring the browser tab to remain open.
+          <div className="p-4 bg-surface-subtle border border-border rounded-xl text-xs text-ink-secondary leading-relaxed flex items-start gap-3">
+            <Server className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <strong className="text-ink-primary">Asynchronous Background Processing:</strong> Activating this batch triggers background text reconstruction and evaluation across all resumes.
+              Processing runs continuously on the server worker without requiring the browser tab to remain open.
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-border">
