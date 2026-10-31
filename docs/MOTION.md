@@ -105,3 +105,4 @@ To prevent bundle bloat, `gsap/ScrollTrigger` is isolated to the public landing 
 | **HTML Shell (`index.html`)** | 0.81 kB (gzip: 0.46 kB) | 0.81 kB (gzip: 0.46 kB) | **0 kB** |
 
 All tests pass (169/169 tests across engine, shared, api, and web), and TypeScript typechecks with 0 errors.
+
