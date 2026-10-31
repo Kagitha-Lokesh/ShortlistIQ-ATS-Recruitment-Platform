@@ -1209,7 +1209,7 @@ export const BatchDetailPage: React.FC = () => {
 
       {/* Delete Batch Confirmation Dialog */}
       {showDeleteBatchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
           <div className="bg-surface border border-border rounded-xl shadow-lg max-w-md w-full p-6 space-y-4">
             <div className="flex items-center gap-3 text-status-danger-text">
               <AlertTriangle className="w-6 h-6 shrink-0" />

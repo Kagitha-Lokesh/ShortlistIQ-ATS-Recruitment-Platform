@@ -70,7 +70,7 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 flex items-center justify-center p-4">
       <div className="bg-surface rounded-lg shadow-xl border border-border max-w-lg w-full overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface-subtle">

@@ -160,7 +160,7 @@ export const CriteriaBuilderModal: React.FC<CriteriaBuilderModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 overflow-y-auto">
       <div className="bg-surface border border-border rounded-xl shadow-lg max-w-3xl w-full my-8 max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-5 border-b border-border flex items-center justify-between bg-surface-subtle/50">

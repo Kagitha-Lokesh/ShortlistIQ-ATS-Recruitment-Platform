@@ -176,3 +176,4 @@ ShortlistIQ conforms to **WCAG 2.2 Level AA**:
 2. **Focus Rings**: `:focus-visible` outline is 2px solid `#2563EB` with a 2px offset.
 3. **200% Zoom Reflow**: All cards, forms, and dialog surfaces use flexible percentage widths, `min-w-0`, and `flex-wrap` to reflow without horizontal clipping at 200% browser zoom.
 4. **Automated Axe Testing**: 12/12 core application routes pass `axe.run()` with **0 Critical, 0 Serious, 0 Moderate, and 0 Minor** violations.
+

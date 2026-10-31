@@ -255,7 +255,7 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="candidate-drawer-title"
-      className="fixed inset-0 z-50 overflow-hidden bg-slate-950/40 backdrop-blur-xs flex justify-end"
+      className="fixed inset-0 z-50 overflow-hidden bg-slate-950/40 flex justify-end"
     >
       <div ref={containerRef} className="w-full max-w-2xl bg-surface h-full shadow-2xl flex flex-col focus:outline-none" tabIndex={-1}>
         {/* Drawer Header */}

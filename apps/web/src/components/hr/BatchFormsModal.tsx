@@ -78,7 +78,7 @@ export const BatchFormsModal: React.FC<BatchFormsModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
         <div className="bg-surface rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden border border-border animate-in fade-in zoom-in-95">
           {/* Header */}
           <div className="p-5 border-b border-border flex items-center justify-between bg-surface-subtle">

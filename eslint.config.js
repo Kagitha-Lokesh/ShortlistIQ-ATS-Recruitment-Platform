@@ -4,7 +4,7 @@ import globals from 'globals';
 export default [
   js.configs.recommended,
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/.turbo/**']
+    ignores: ['**/dist/**', '**/node_modules/**', '**/.turbo/**', '**/.agents/**', 'scripts/**']
   },
   {
     languageOptions: {

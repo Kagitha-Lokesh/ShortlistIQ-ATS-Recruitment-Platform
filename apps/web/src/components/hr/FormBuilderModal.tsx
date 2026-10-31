@@ -447,7 +447,7 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-slate-950/40 flex items-center justify-center p-4">
       <div className="bg-surface rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-border">
         {/* Modal Header */}
         <div className="p-5 border-b border-border flex items-center justify-between bg-surface-subtle">
