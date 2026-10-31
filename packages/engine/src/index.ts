@@ -6,4 +6,6 @@ export * from './scoring/readability.js';
 export * from './scoring/index.js';
 export * from './converter/index.js';
 export * from './ingest/index.js';
+export * from './extract/index.js';
+
 
