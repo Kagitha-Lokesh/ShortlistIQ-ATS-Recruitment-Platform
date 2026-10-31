@@ -1,23 +1,34 @@
 import React from 'react';
 
-interface SwitchProps {
+export interface SwitchProps {
   checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
+  onCheckedChange?: (checked: boolean) => void;
+  onChange?: (checked: boolean) => void;
   label?: string;
   description?: string;
   id?: string;
   disabled?: boolean;
+  'aria-label'?: string;
 }
 
 export const Switch: React.FC<SwitchProps> = ({
   checked,
   onCheckedChange,
+  onChange,
   label,
   description,
   id,
-  disabled = false
+  disabled = false,
+  'aria-label': ariaLabel
 }) => {
   const switchId = id || `switch-${Math.random().toString(36).slice(2, 9)}`;
+
+  const handleToggle = () => {
+    if (disabled) return;
+    const next = !checked;
+    if (onCheckedChange) onCheckedChange(next);
+    if (onChange) onChange(next);
+  };
 
   return (
     <div className="flex items-center justify-between gap-3">
@@ -32,8 +43,9 @@ export const Switch: React.FC<SwitchProps> = ({
         role="switch"
         id={switchId}
         aria-checked={checked}
+        aria-label={ariaLabel || label}
         disabled={disabled}
-        onClick={() => onCheckedChange(!checked)}
+        onClick={handleToggle}
         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
           checked ? 'bg-primary' : 'bg-slate-300'
         }`}

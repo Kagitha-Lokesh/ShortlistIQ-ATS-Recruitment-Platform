@@ -18,6 +18,7 @@ import { ApplyPage } from './pages/public/ApplyPage.js';
 import { CandidateDataDeletionPage } from './pages/candidate/CandidateDataDeletionPage.js';
 import { PrivacyPolicyPage } from './pages/public/PrivacyPolicyPage.js';
 import { TermsOfServicePage } from './pages/public/TermsOfServicePage.js';
+import { ComponentShowcasePage } from './pages/dev/ComponentShowcasePage.js';
 
 export const AppRouter: React.FC = () => {
   return (
@@ -27,6 +28,9 @@ export const AppRouter: React.FC = () => {
 
       {/* Candidate Privacy Erasure Portal (Public) */}
       <Route path="/privacy/delete-data" element={<CandidateDataDeletionPage />} />
+
+      {/* Internal Component & Token Showcase (Dev Only) */}
+      <Route path="/dev/showcase" element={<ComponentShowcasePage />} />
 
       {/* Public Marketing Routes */}
       <Route element={<PublicLayout />}>
