@@ -477,7 +477,7 @@ export const checksApi = {
   async updateCandidate(
     batchId: string,
     candidateId: string,
-    payload: { email?: string; fullName?: string; phone?: string; notes?: string; formAnswers?: any }
+    payload: { email?: string; fullName?: string; phone?: string; notes?: string; formAnswers?: any; criteriaResults?: any }
   ): Promise<any> {
     const res = await apiClient<{ success: boolean; data: any }>(
       `/api/v1/batches/${batchId}/candidates/${candidateId}`,

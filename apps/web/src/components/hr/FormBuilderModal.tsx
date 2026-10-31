@@ -43,8 +43,14 @@ import {
   ToggleLeft,
   ListPlus,
   Loader2,
-  Info
+  Info,
+  Copy,
+  Eye,
+  Check,
+  ShieldAlert
 } from 'lucide-react';
+import { Button } from '../ui/Button.js';
+import { useToast } from '../../context/ToastContext.js';
 
 interface FormBuilderModalProps {
   batchId: string;
@@ -73,21 +79,21 @@ const SortableFieldItem: React.FC<{
   const getTypeIcon = (type: FormFieldType) => {
     switch (type) {
       case 'text':
-        return <Type className="w-3.5 h-3.5 text-slate-500" />;
+        return <Type className="w-3.5 h-3.5 text-ink-muted" />;
       case 'textarea':
-        return <AlignLeft className="w-3.5 h-3.5 text-slate-500" />;
+        return <AlignLeft className="w-3.5 h-3.5 text-ink-muted" />;
       case 'select':
-        return <ChevronDown className="w-3.5 h-3.5 text-slate-500" />;
+        return <ChevronDown className="w-3.5 h-3.5 text-ink-muted" />;
       case 'multiselect':
-        return <ListPlus className="w-3.5 h-3.5 text-slate-500" />;
+        return <ListPlus className="w-3.5 h-3.5 text-ink-muted" />;
       case 'boolean':
-        return <ToggleLeft className="w-3.5 h-3.5 text-slate-500" />;
+        return <ToggleLeft className="w-3.5 h-3.5 text-ink-muted" />;
       case 'number':
-        return <Hash className="w-3.5 h-3.5 text-slate-500" />;
+        return <Hash className="w-3.5 h-3.5 text-ink-muted" />;
       case 'date':
-        return <Calendar className="w-3.5 h-3.5 text-slate-500" />;
+        return <Calendar className="w-3.5 h-3.5 text-ink-muted" />;
       default:
-        return <Type className="w-3.5 h-3.5 text-slate-500" />;
+        return <Type className="w-3.5 h-3.5 text-ink-muted" />;
     }
   };
 
@@ -95,31 +101,31 @@ const SortableFieldItem: React.FC<{
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-md shadow-xs hover:border-slate-300 transition-colors"
+      className="flex items-center justify-between p-3.5 bg-surface border border-border rounded-xl shadow-2xs hover:border-border-strong transition-colors"
     >
       <div className="flex items-center gap-3">
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 text-slate-400 hover:text-slate-600 transition-colors"
+          className="cursor-grab active:cursor-grabbing p-1 text-ink-muted hover:text-ink-primary transition-colors"
           title="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
         </button>
 
-        <div className="p-1.5 bg-slate-100 rounded text-slate-600">{getTypeIcon(field.type)}</div>
+        <div className="p-2 bg-surface-muted rounded-lg text-ink-secondary">{getTypeIcon(field.type)}</div>
 
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-800">{field.label}</span>
+            <span className="text-xs font-semibold text-ink-primary">{field.label}</span>
             {field.required && (
-              <span className="text-xs text-state-danger font-bold" title="Required field">
+              <span className="text-xs text-status-danger-text font-bold" title="Required field">
                 *
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-[10px] text-slate-400">
-            <span className="uppercase font-medium tracking-wider">{field.type}</span>
+          <div className="flex items-center gap-2 text-[10px] text-ink-muted mt-0.5">
+            <span className="uppercase font-medium font-mono">{field.type}</span>
             <span>•</span>
             <span>Key: {field.id}</span>
             {field.options && field.options.length > 0 && (
@@ -135,13 +141,13 @@ const SortableFieldItem: React.FC<{
       <div className="flex items-center gap-1">
         <button
           onClick={() => onEdit(field)}
-          className="px-2 py-1 text-xs text-brand-indigo hover:bg-indigo-50 rounded transition-colors"
+          className="px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors"
         >
           Edit
         </button>
         <button
           onClick={() => onDelete(field.id)}
-          className="p-1 text-slate-400 hover:text-state-danger rounded transition-colors"
+          className="p-1 text-ink-muted hover:text-status-danger-text rounded-md transition-colors"
           title="Remove field"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -158,7 +164,8 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
   formToEdit,
   onFormSaved
 }) => {
-  const [activeTab, setActiveTab] = useState<'fields' | 'knockout' | 'settings'>('fields');
+  const { addToast } = useToast();
+  const [activeTab, setActiveTab] = useState<'fields' | 'knockout' | 'settings' | 'preview'>('fields');
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [isPublished, setIsPublished] = useState(true);
@@ -167,7 +174,7 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Field editing modal/drawer state
+  // Field editing modal state
   const [editingField, setEditingField] = useState<FormField | null>(null);
   const [fieldLabel, setFieldLabel] = useState('');
   const [fieldId, setFieldId] = useState('');
@@ -177,7 +184,7 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
   const [fieldHelpText, setFieldHelpText] = useState('');
   const [fieldOptionsText, setFieldOptionsText] = useState('');
 
-  // Setup sensors for dnd-kit
+  // Sensors for dnd-kit
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -206,7 +213,7 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
         },
         {
           id: 'willing_to_relocate',
-          label: 'Are you willing to relocate to work on-site if required?',
+          label: 'Are you legally authorized to work in this location?',
           type: 'boolean',
           required: true,
           isLocked: false
@@ -216,10 +223,10 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
         {
           id: `ko_${Date.now()}`,
           fieldId: 'willing_to_relocate',
-          fieldLabel: 'Are you willing to relocate to work on-site if required?',
+          fieldLabel: 'Are you legally authorized to work in this location?',
           operator: 'equals',
           value: false,
-          reason: 'Candidate is unable or unwilling to relocate'
+          reason: 'Candidate does not have verified work authorization'
         }
       ]);
     }
@@ -228,7 +235,6 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Auto-generate slug from title if empty
   const handleTitleChange = (val: string) => {
     setTitle(val);
     if (!formToEdit && (!slug || slug === title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30))) {
@@ -253,22 +259,18 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
     }
   };
 
-  const handleOpenAddField = () => {
-    const newId = `field_${Date.now().toString(36)}`;
-    setEditingField({
+  const handleAddFieldFromPalette = (type: FormFieldType) => {
+    const newId = `field_${Date.now()}`;
+    const newField: FormField = {
       id: newId,
-      label: 'New Question',
-      type: 'text',
+      label: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Question`,
+      type,
       required: false,
-      isLocked: false
-    });
-    setFieldLabel('New Question');
-    setFieldId(newId);
-    setFieldType('text');
-    setFieldRequired(false);
-    setFieldPlaceholder('');
-    setFieldHelpText('');
-    setFieldOptionsText('');
+      isLocked: false,
+      options: type === 'select' || type === 'multiselect' ? ['Option 1', 'Option 2'] : undefined
+    };
+    setCustomFields((prev) => [...prev, newField]);
+    handleOpenEditField(newField);
   };
 
   const handleOpenEditField = (field: FormField) => {
@@ -276,25 +278,28 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
     setFieldLabel(field.label);
     setFieldId(field.id);
     setFieldType(field.type);
-    setFieldRequired(field.required || false);
+    setFieldRequired(field.required);
     setFieldPlaceholder(field.placeholder || '');
     setFieldHelpText(field.helpText || '');
-    setFieldOptionsText((field.options || []).join('\n'));
+    setFieldOptionsText(field.options ? field.options.join('\n') : '');
   };
 
-  const handleSaveField = () => {
-    if (!fieldLabel.trim()) return;
+  const handleSaveFieldEdit = () => {
+    if (!editingField || !fieldLabel.trim()) return;
 
-    const options =
-      fieldType === 'select' || fieldType === 'multiselect'
-        ? fieldOptionsText
-            .split('\n')
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined;
+    let options: string[] | undefined = undefined;
+    if (fieldType === 'select' || fieldType === 'multiselect') {
+      options = fieldOptionsText
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (options.length === 0) {
+        options = ['Option 1', 'Option 2'];
+      }
+    }
 
     const updated: FormField = {
-      id: fieldId.trim() || `field_${Date.now()}`,
+      ...editingField,
       label: fieldLabel.trim(),
       type: fieldType,
       required: fieldRequired,
@@ -317,11 +322,9 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
 
   const handleDeleteField = (id: string) => {
     setCustomFields((prev) => prev.filter((f) => f.id !== id));
-    // Also remove associated knockout rules
     setKnockoutRules((prev) => prev.filter((r) => r.fieldId !== id));
   };
 
-  // Knockout rule handlers
   const handleAddKnockoutRule = () => {
     const firstField = customFields[0];
     if (!firstField) return;
@@ -343,6 +346,12 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
     setKnockoutRules((prev) => prev.filter((r) => r.id !== id));
   };
 
+  const handleCopyPublicLink = () => {
+    const url = `${window.location.origin}/apply/${slug || 'demo'}`;
+    navigator.clipboard.writeText(url);
+    addToast('success', 'Public application link copied to clipboard.');
+  };
+
   const handleSaveForm = async () => {
     try {
       if (!title.trim()) {
@@ -358,7 +367,6 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
       setIsSaving(true);
       setErrorMsg(null);
 
-      // Combine locked mandatory fields + custom drag-and-drop fields
       const allFields: FormField[] = [
         ...LOCKED_MANDATORY_FIELDS,
         {
@@ -401,38 +409,39 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-surface rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-border">
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div className="p-5 border-b border-border flex items-center justify-between bg-surface-subtle">
           <div>
-            <h2 className="text-base font-bold text-slate-primary flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-brand-indigo" />
+            <h2 className="text-base font-bold text-ink-primary flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-primary" />
               {formToEdit ? 'Edit Application Form' : 'Build Custom Application Form'}
             </h2>
-            <p className="text-xs text-slate-secondary mt-0.5">
+            <p className="text-xs text-ink-secondary mt-0.5">
               Customize candidate questions, configure instant knockout rules, and publish public apply URLs.
             </p>
           </div>
-          <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-surface-hover transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-white px-5 pt-2">
+        <div className="flex border-b border-border bg-surface px-5 pt-2">
           {[
             { id: 'fields', label: `Questions (${LOCKED_MANDATORY_FIELDS.length + 1 + customFields.length})` },
             { id: 'knockout', label: `Knockout Rules (${knockoutRules.length})` },
-            { id: 'settings', label: 'Slug & Publishing' }
+            { id: 'settings', label: 'Slug & Publishing' },
+            { id: 'preview', label: 'Live Preview' }
           ].map(({ id, label }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id as any)}
-              className={`pb-2.5 px-3 text-xs font-semibold border-b-2 transition-colors ${
+              className={`pb-2.5 px-3.5 text-xs font-semibold border-b-2 transition-colors ${
                 activeTab === id
-                  ? 'border-brand-indigo text-brand-indigo'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-ink-secondary hover:text-ink-primary'
               }`}
             >
               {label}
@@ -441,82 +450,93 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 text-xs">
           {errorMsg && (
-            <div className="p-3 rounded-md bg-red-50 border border-red-200 text-xs text-state-danger flex items-start gap-2">
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-status-danger-text flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* TAB 1: FORM QUESTIONS */}
+          {/* TAB 1: Questions & Field Palette */}
           {activeTab === 'fields' && (
-            <div className="space-y-5">
-              {/* Locked Fields Section */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-                  <span className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-slate-400" />
-                    Locked & Mandatory Fields (System Defaults)
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-normal">Fixed order & requirement</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-6">
+              {/* Field Palette Bar */}
+              <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
+                <span className="font-bold text-ink-primary block uppercase tracking-wider text-[11px]">
+                  Add Field Palette
+                </span>
+                <div className="flex flex-wrap gap-2">
                   {[
-                    { label: 'Full Name', type: 'Short Text', desc: 'Auto-extracted & verified' },
-                    { label: 'Email Address', type: 'Email', desc: 'Primary contact key' },
-                    { label: 'Phone Number', type: 'Phone', desc: 'Direct outreach' },
-                    { label: 'Resume File (.pdf)', type: 'PDF Upload', desc: 'Text-based PDF up to 10MB' }
-                  ].map((field, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 bg-slate-50 border border-slate-200 rounded flex items-center justify-between text-xs text-slate-700"
+                    { type: 'text', label: 'Text Input', icon: Type },
+                    { type: 'textarea', label: 'Multi-line', icon: AlignLeft },
+                    { type: 'select', label: 'Dropdown', icon: ChevronDown },
+                    { type: 'multiselect', label: 'Multi-Select', icon: ListPlus },
+                    { type: 'boolean', label: 'Yes/No Toggle', icon: ToggleLeft },
+                    { type: 'number', label: 'Number', icon: Hash },
+                    { type: 'date', label: 'Date', icon: Calendar }
+                  ].map(({ type, label, icon: Icon }) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => handleAddFieldFromPalette(type as any)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface border border-border text-ink-primary hover:border-primary hover:text-primary transition-all shadow-2xs"
                     >
-                      <div className="flex items-center gap-2">
-                        <Lock className="w-3 h-3 text-slate-400" />
-                        <div>
-                          <div className="font-semibold text-slate-800 flex items-center gap-1">
-                            {field.label}
-                            <span className="text-state-danger font-bold">*</span>
-                          </div>
-                          <div className="text-[10px] text-slate-400">{field.desc}</div>
-                        </div>
-                      </div>
-                      <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 text-[10px] font-medium">
-                        {field.type}
-                      </span>
-                    </div>
+                      <Icon className="w-3.5 h-3.5 text-primary" />
+                      <span>{label}</span>
+                    </button>
                   ))}
                 </div>
               </div>
 
-              {/* Custom Questions Section (Drag & Drop) */}
-              <div className="space-y-3 pt-2 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-primary">Additional Custom Questions</h3>
-                    <p className="text-[11px] text-slate-secondary">
-                      Drag and drop using the handle to arrange the question order on the public form.
-                    </p>
+              {/* Locked Mandatory Fields */}
+              <div className="space-y-2">
+                <span className="font-bold uppercase tracking-wider text-ink-muted text-[11px] block">
+                  Mandatory Identity Fields (Auto-Captured)
+                </span>
+                <div className="space-y-2">
+                  {LOCKED_MANDATORY_FIELDS.map((field) => (
+                    <div
+                      key={field.id}
+                      className="p-3 rounded-xl border border-border bg-surface-muted/60 flex items-center justify-between text-ink-muted"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span className="font-medium text-ink-primary">{field.label}</span>
+                        <span className="text-[10px] text-status-danger-text font-bold">*</span>
+                      </div>
+                      <span className="text-[10px] font-mono uppercase bg-surface border border-border px-2 py-0.5 rounded">
+                        Mandatory
+                      </span>
+                    </div>
+                  ))}
+                  <div className="p-3 rounded-xl border border-border bg-surface-muted/60 flex items-center justify-between text-ink-muted">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span className="font-medium text-ink-primary">Resume Document (PDF)</span>
+                      <span className="text-[10px] text-status-danger-text font-bold">*</span>
+                    </div>
+                    <span className="text-[10px] font-mono uppercase bg-surface border border-border px-2 py-0.5 rounded">
+                      Mandatory
+                    </span>
                   </div>
-                  <button
-                    onClick={handleOpenAddField}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-brand-indigo text-white hover:bg-brand-hover transition-colors shadow-xs"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Question
-                  </button>
                 </div>
+              </div>
+
+              {/* Custom Sortable Fields */}
+              <div className="space-y-3">
+                <span className="font-bold uppercase tracking-wider text-ink-muted text-[11px] block">
+                  Custom Screening Questions ({customFields.length})
+                </span>
 
                 {customFields.length === 0 ? (
-                  <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-lg text-xs text-slate-400">
-                    No custom questions added yet. Click &ldquo;Add Question&rdquo; to add screening questions.
+                  <div className="p-8 text-center border border-dashed border-border rounded-xl text-ink-muted bg-surface-subtle/30">
+                    No custom fields added yet. Select a field type from the palette above.
                   </div>
                 ) : (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={customFields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         {customFields.map((field) => (
                           <SortableFieldItem
                             key={field.id}
@@ -533,384 +553,301 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
             </div>
           )}
 
-          {/* TAB 2: KNOCKOUT RULES */}
+          {/* TAB 2: Knockout Rules with Strict Warning */}
           {activeTab === 'knockout' && (
             <div className="space-y-5">
-              {/* Warning Alert Banner */}
-              <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-xs text-state-warning">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-state-warning" />
-                <div>
-                  <strong className="font-semibold text-amber-900 block mb-0.5">Automated Knockout Screening</strong>
-                  Candidates who match any knockout rule are immediately classified as{' '}
-                  <span className="font-semibold text-slate-800">Unshortlisted</span> (decision source:{' '}
-                  <code>knockout</code>). They do not consume scoring credits, but remain fully visible in your HR
-                  dashboard with the explicit knockout rejection reason.
+              {/* Prominent Knockout Warning */}
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3 shadow-2xs">
+                <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                <div className="space-y-1 text-xs text-amber-950">
+                  <span className="font-bold block text-sm">Critical Notice: Automated Knockout Rules</span>
+                  <p className="leading-relaxed">
+                    Candidates who fail any knockout rule are <strong>immediately classified as Unshortlisted</strong> upon submission. The engine will not recommend them, regardless of their ATS match score.
+                    Use knockout rules strictly for non-negotiable legal requirements (e.g. valid work authorization, mandatory state licenses).
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-primary">Configured Knockout Rules</h3>
-                <button
-                  onClick={handleAddKnockoutRule}
-                  disabled={customFields.length === 0}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors shadow-xs disabled:opacity-40"
-                >
-                  <Plus className="w-3.5 h-3.5" />
+                <h3 className="font-bold text-ink-primary">Active Knockout Criteria</h3>
+                <Button size="sm" variant="outline" onClick={handleAddKnockoutRule} leftIcon={<Plus className="w-3.5 h-3.5" />}>
                   Add Knockout Rule
-                </button>
+                </Button>
               </div>
 
               {knockoutRules.length === 0 ? (
-                <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-lg text-xs text-slate-400">
-                  No knockout rules configured. Candidates will be scored without automatic auto-rejection.
+                <div className="p-8 text-center border border-dashed border-border rounded-xl text-ink-muted bg-surface-subtle/30">
+                  No automated knockout rules configured. Candidates will be evaluated based on deterministic match criteria.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {knockoutRules.map((rule, idx) => {
-                    const targetField = customFields.find((f) => f.id === rule.fieldId);
-                    return (
-                      <div
-                        key={rule.id}
-                        className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3 relative group"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                            Rule #{idx + 1}
-                          </span>
-                          <button
-                            onClick={() => handleRemoveKnockoutRule(rule.id)}
-                            className="p-1 text-slate-400 hover:text-state-danger transition-colors"
-                            title="Delete Rule"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                  {knockoutRules.map((rule, rIdx) => (
+                    <div key={rule.id} className="p-4 bg-surface border border-border rounded-xl space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-ink-primary">Rule #{rIdx + 1}</span>
+                        <button
+                          onClick={() => handleRemoveKnockoutRule(rule.id)}
+                          className="p-1 text-ink-muted hover:text-status-danger-text rounded"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                          {/* Target Field */}
-                          <div>
-                            <label className="block text-[10px] font-semibold text-slate-600 mb-1">When Field</label>
-                            <select
-                              value={rule.fieldId}
-                              onChange={(e) => {
-                                const selected = customFields.find((f) => f.id === e.target.value);
-                                setKnockoutRules((prev) =>
-                                  prev.map((r) =>
-                                    r.id === rule.id
-                                      ? {
-                                          ...r,
-                                          fieldId: e.target.value,
-                                          fieldLabel: selected?.label,
-                                          value: selected?.type === 'boolean' ? false : ''
-                                        }
-                                      : r
-                                  )
-                                );
-                              }}
-                              className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white focus:outline-none focus:border-brand-indigo"
-                            >
-                              {customFields.map((f) => (
-                                <option key={f.id} value={f.id}>
-                                  {f.label} ({f.type})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Operator */}
-                          <div>
-                            <label className="block text-[10px] font-semibold text-slate-600 mb-1">Condition</label>
-                            <select
-                              value={rule.operator}
-                              onChange={(e) => {
-                                setKnockoutRules((prev) =>
-                                  prev.map((r) =>
-                                    r.id === rule.id ? { ...r, operator: e.target.value as KnockoutOperator } : r
-                                  )
-                                );
-                              }}
-                              className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white focus:outline-none focus:border-brand-indigo"
-                            >
-                              <option value="equals">Equals</option>
-                              <option value="not_equals">Does Not Equal</option>
-                              <option value="less_than">Less Than</option>
-                              <option value="greater_than">Greater Than</option>
-                              <option value="contains">Contains</option>
-                              <option value="excludes">Does Not Contain</option>
-                            </select>
-                          </div>
-
-                          {/* Trigger Value */}
-                          <div>
-                            <label className="block text-[10px] font-semibold text-slate-600 mb-1">Knockout Value</label>
-                            {targetField?.type === 'boolean' ? (
-                              <select
-                                value={String(rule.value)}
-                                onChange={(e) => {
-                                  const val = e.target.value === 'true';
-                                  setKnockoutRules((prev) =>
-                                    prev.map((r) => (r.id === rule.id ? { ...r, value: val } : r))
-                                  );
-                                }}
-                                className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white focus:outline-none focus:border-brand-indigo"
-                              >
-                                <option value="false">No / False</option>
-                                <option value="true">Yes / True</option>
-                              </select>
-                            ) : targetField?.type === 'number' ? (
-                              <input
-                                type="number"
-                                value={rule.value as number}
-                                onChange={(e) => {
-                                  const val = Number(e.target.value);
-                                  setKnockoutRules((prev) =>
-                                    prev.map((r) => (r.id === rule.id ? { ...r, value: val } : r))
-                                  );
-                                }}
-                                className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white focus:outline-none focus:border-brand-indigo"
-                                placeholder="e.g. 3"
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                value={String(rule.value ?? '')}
-                                onChange={(e) => {
-                                  setKnockoutRules((prev) =>
-                                    prev.map((r) => (r.id === rule.id ? { ...r, value: e.target.value } : r))
-                                  );
-                                }}
-                                className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white focus:outline-none focus:border-brand-indigo"
-                                placeholder="Triggering value"
-                              />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Rejection Reason */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                          <label className="block text-[10px] font-semibold text-slate-600 mb-1">
-                            Internal Rejection Reason (Visible to HR in Dashboard)
+                          <label className="block text-[11px] font-medium text-ink-secondary mb-1">
+                            Trigger Question
+                          </label>
+                          <select
+                            value={rule.fieldId}
+                            onChange={(e) => {
+                              const found = customFields.find((f) => f.id === e.target.value);
+                              setKnockoutRules((prev) =>
+                                prev.map((r) =>
+                                  r.id === rule.id
+                                    ? {
+                                        ...r,
+                                        fieldId: e.target.value,
+                                        fieldLabel: found?.label || e.target.value
+                                      }
+                                    : r
+                                )
+                              );
+                            }}
+                            className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-primary"
+                          >
+                            {customFields.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-medium text-ink-secondary mb-1">
+                            Knockout If Value
                           </label>
                           <input
                             type="text"
-                            value={rule.reason}
+                            value={String(rule.value)}
                             onChange={(e) => {
                               setKnockoutRules((prev) =>
-                                prev.map((r) => (r.id === rule.id ? { ...r, reason: e.target.value } : r))
+                                prev.map((r) =>
+                                  r.id === rule.id
+                                    ? { ...r, value: e.target.value === 'false' ? false : e.target.value === 'true' ? true : e.target.value }
+                                    : r
+                                )
                               );
                             }}
-                            className="w-full text-xs p-1.5 border border-slate-300 rounded bg-white focus:outline-none focus:border-brand-indigo"
-                            placeholder="e.g. Candidate answered No to mandatory relocation requirement"
+                            placeholder="false or expected value"
+                            className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-primary"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-medium text-ink-secondary mb-1">
+                            Disqualification Reason
+                          </label>
+                          <input
+                            type="text"
+                            value={rule.reason || ''}
+                            onChange={(e) => {
+                              setKnockoutRules((prev) =>
+                                prev.map((r) =>
+                                  r.id === rule.id ? { ...r, reason: e.target.value } : r
+                                )
+                              );
+                            }}
+                            placeholder="e.g. Lacks required license"
+                            className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-primary"
                           />
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB 3: SETTINGS & PUBLISHING */}
+          {/* TAB 3: Slug & Settings */}
           {activeTab === 'settings' && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Form Title</label>
+                <label className="block text-xs font-semibold text-ink-primary mb-1">
+                  Public Form Title *
+                </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="e.g. Senior Full Stack Engineer Application"
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none"
+                  placeholder="e.g. Senior Backend Engineer Application"
+                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-ink-primary"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Public URL Slug</label>
-                <div className="flex items-center">
-                  <span className="px-3 py-2 bg-slate-100 border border-r-0 border-slate-300 rounded-l text-xs text-slate-500 font-mono">
-                    /apply/
-                  </span>
-                  <input
-                    type="text"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                    placeholder="fullstack-engineer"
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-r focus:border-brand-indigo focus:outline-none font-mono"
-                  />
+                <label className="block text-xs font-semibold text-ink-primary mb-1">
+                  Public URL Slug *
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center border border-border rounded-lg bg-surface px-3 py-2 text-xs">
+                    <span className="text-ink-muted mr-1 font-mono">/apply/</span>
+                    <input
+                      type="text"
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="senior-backend-engineer"
+                      className="w-full bg-transparent focus:outline-none text-ink-primary font-mono text-xs"
+                    />
+                  </div>
+                  <Button size="sm" variant="outline" onClick={handleCopyPublicLink} leftIcon={<Copy className="w-3.5 h-3.5" />}>
+                    Copy Link
+                  </Button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Public candidates will submit applications via: <code className="text-brand-indigo">/apply/{slug || '...'}</code>
-                </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-200">
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isPublished}
-                    onChange={(e) => setIsPublished(e.target.checked)}
-                    className="mt-0.5 rounded border-slate-300 text-brand-indigo focus:ring-0"
-                  />
-                  <div>
-                    <span className="text-xs font-semibold text-slate-800 block">
-                      Published (Accepting Submissions)
-                    </span>
-                    <span className="text-[11px] text-slate-400 block">
-                      Uncheck to close the form. Closed forms reject new submissions while keeping all previous
-                      submissions intact.
-                    </span>
+              <div className="p-4 bg-surface-subtle border border-border rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-ink-primary block">Accepting Applications</span>
+                  <span className="text-[11px] text-ink-secondary">
+                    When enabled, candidates can access this public link and submit applications.
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isPublished}
+                  onChange={(e) => setIsPublished(e.target.checked)}
+                  className="rounded text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Live Preview */}
+          {activeTab === 'preview' && (
+            <div className="p-6 bg-surface-muted border border-border rounded-xl space-y-5 max-w-xl mx-auto shadow-inner">
+              <div className="text-center space-y-1 pb-4 border-b border-border">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Candidate Live Preview</span>
+                <h3 className="text-base font-bold text-ink-primary">{title || 'Job Application'}</h3>
+                <p className="text-xs text-ink-secondary">Single-column accessible candidate submission form</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-ink-primary mb-1">Full Name *</label>
+                  <input disabled placeholder="Jane Doe" className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-muted cursor-not-allowed" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-primary mb-1">Email Address *</label>
+                  <input disabled placeholder="jane.doe@example.com" className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-muted cursor-not-allowed" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-primary mb-1">Resume Document (PDF) *</label>
+                  <div className="border border-dashed border-border rounded-lg p-4 text-center text-ink-muted text-xs bg-surface">
+                    Drop PDF resume here
                   </div>
-                </label>
+                </div>
+
+                {customFields.map((f) => (
+                  <div key={f.id}>
+                    <label className="block text-xs font-medium text-ink-primary mb-1">
+                      {f.label} {f.required && <span className="text-status-danger-text">*</span>}
+                    </label>
+                    <input disabled placeholder={f.placeholder || 'Your answer'} className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-muted cursor-not-allowed" />
+                  </div>
+                ))}
+
+                <div className="pt-2">
+                  <Button disabled variant="primary" className="w-full">
+                    Submit Application
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
-          <div className="text-xs text-slate-400">
-            {customFields.length} custom questions • {knockoutRules.length} knockout rules
-          </div>
+        <div className="p-4 border-t border-border bg-surface-subtle flex items-center justify-between">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              disabled={isSaving}
-              className="px-3.5 py-1.5 text-xs text-slate-600 hover:text-slate-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveForm}
-              disabled={isSaving}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded text-xs font-semibold bg-brand-indigo text-white hover:bg-brand-hover transition-colors shadow-xs disabled:opacity-50"
-            >
-              {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {formToEdit ? 'Save Changes' : 'Publish Application Form'}
-            </button>
-          </div>
+          <Button variant="primary" size="sm" onClick={handleSaveForm} isLoading={isSaving} leftIcon={<Check className="w-3.5 h-3.5" />}>
+            Save Application Form
+          </Button>
         </div>
       </div>
 
-      {/* Field Editor Dialog */}
+      {/* Inline Field Editor Modal */}
       {editingField && (
-        <div className="fixed inset-0 z-60 bg-slate-900/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-5 space-y-4 border border-slate-200 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 className="text-xs font-bold text-slate-primary">Configure Question</h4>
-              <button
-                onClick={() => setEditingField(null)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        <div className="fixed inset-0 z-60 bg-slate-950/40 flex items-center justify-center p-4">
+          <div className="bg-surface rounded-xl shadow-xl border border-border max-w-md w-full p-5 space-y-4">
+            <h3 className="text-sm font-bold text-ink-primary">Configure Question</h3>
+
+            <div>
+              <label className="block text-xs font-medium text-ink-primary mb-1">Question Label *</label>
+              <input
+                type="text"
+                value={fieldLabel}
+                onChange={(e) => setFieldLabel(e.target.value)}
+                className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-primary"
+              />
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div>
+              <label className="block text-xs font-medium text-ink-primary mb-1">Field Type</label>
+              <select
+                value={fieldType}
+                onChange={(e) => setFieldType(e.target.value as any)}
+                className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-primary"
+              >
+                <option value="text">Single-line Text</option>
+                <option value="textarea">Multi-line Text</option>
+                <option value="select">Dropdown Select</option>
+                <option value="multiselect">Multi-Select</option>
+                <option value="boolean">Yes/No Boolean</option>
+                <option value="number">Number</option>
+                <option value="date">Date</option>
+              </select>
+            </div>
+
+            {(fieldType === 'select' || fieldType === 'multiselect') && (
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Question Label / Prompt</label>
-                <input
-                  type="text"
-                  value={fieldLabel}
-                  onChange={(e) => setFieldLabel(e.target.value)}
-                  placeholder="e.g. Years of Experience with React"
-                  className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none"
-                  autoFocus
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Field Type</label>
-                  <select
-                    value={fieldType}
-                    onChange={(e) => setFieldType(e.target.value as FormFieldType)}
-                    className="w-full text-xs px-2 py-1.5 border border-slate-300 rounded bg-white focus:outline-none focus:border-brand-indigo"
-                  >
-                    <option value="text">Short Text</option>
-                    <option value="textarea">Long Text (Paragraph)</option>
-                    <option value="number">Number</option>
-                    <option value="boolean">Yes / No</option>
-                    <option value="date">Date</option>
-                    <option value="select">Dropdown Select</option>
-                    <option value="multiselect">Multi-Select</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Internal Key</label>
-                  <input
-                    type="text"
-                    value={fieldId}
-                    onChange={(e) => setFieldId(e.target.value.replace(/[^a-z0-9_]/gi, '_'))}
-                    className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
-
-              {(fieldType === 'select' || fieldType === 'multiselect') && (
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Options (One per line)</label>
-                  <textarea
-                    rows={4}
-                    value={fieldOptionsText}
-                    onChange={(e) => setFieldOptionsText(e.target.value)}
-                    placeholder="Option 1&#10;Option 2&#10;Option 3"
-                    className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none font-mono"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Placeholder (Optional)</label>
-                <input
-                  type="text"
-                  value={fieldPlaceholder}
-                  onChange={(e) => setFieldPlaceholder(e.target.value)}
-                  placeholder="e.g. Select an option or type answer..."
-                  className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Help Text / Instructions (Optional)</label>
-                <input
-                  type="text"
-                  value={fieldHelpText}
-                  onChange={(e) => setFieldHelpText(e.target.value)}
-                  placeholder="e.g. Include internships and full-time roles"
-                  className="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-2 border-t border-slate-100">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={fieldRequired}
-                    onChange={(e) => setFieldRequired(e.target.checked)}
-                    className="rounded border-slate-300 text-brand-indigo focus:ring-0"
-                  />
-                  <span className="font-semibold text-slate-700">Required field (cannot be left empty)</span>
+                <label className="block text-xs font-medium text-ink-primary mb-1">
+                  Options (one per line)
                 </label>
+                <textarea
+                  rows={3}
+                  value={fieldOptionsText}
+                  onChange={(e) => setFieldOptionsText(e.target.value)}
+                  className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-ink-primary font-mono"
+                />
               </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="reqCheck"
+                checked={fieldRequired}
+                onChange={(e) => setFieldRequired(e.target.checked)}
+                className="rounded text-primary focus:ring-primary cursor-pointer"
+              />
+              <label htmlFor="reqCheck" className="text-xs text-ink-primary font-medium cursor-pointer">
+                Required response
+              </label>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                onClick={() => setEditingField(null)}
-                className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800"
-              >
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <Button size="sm" variant="outline" onClick={() => setEditingField(null)}>
                 Cancel
-              </button>
-              <button
-                onClick={handleSaveField}
-                disabled={!fieldLabel.trim()}
-                className="px-3.5 py-1.5 rounded text-xs font-semibold bg-brand-indigo text-white hover:bg-brand-hover disabled:opacity-50 transition-colors"
-              >
-                Apply
-              </button>
+              </Button>
+              <Button size="sm" variant="primary" onClick={handleSaveFieldEdit}>
+                Done
+              </Button>
             </div>
           </div>
         </div>

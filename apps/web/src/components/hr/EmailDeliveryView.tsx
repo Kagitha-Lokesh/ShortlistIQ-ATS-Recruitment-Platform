@@ -40,7 +40,7 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-border rounded-lg p-12 text-center text-xs text-slate-400">
+      <div className="bg-surface border border-border rounded-lg p-12 text-center text-xs text-ink-muted">
         Loading delivery logs...
       </div>
     );
@@ -52,10 +52,10 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
 
   if (sends.length === 0) {
     return (
-      <div className="bg-white border border-slate-border rounded-lg p-12 text-center">
-        <Mail className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-        <h3 className="text-sm font-semibold text-slate-primary">No Emails Dispatched Yet</h3>
-        <p className="text-xs text-slate-secondary max-w-sm mx-auto mt-1">
+      <div className="bg-surface border border-border rounded-lg p-12 text-center">
+        <Mail className="w-10 h-10 text-ink-muted mx-auto mb-3" />
+        <h3 className="text-sm font-semibold text-ink-primary">No Emails Dispatched Yet</h3>
+        <p className="text-xs text-ink-secondary max-w-sm mx-auto mt-1">
           When this batch is finalized, candidate decision emails will be formatted and queued for delivery here.
         </p>
       </div>
@@ -66,43 +66,43 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
     <div className="space-y-4">
       {/* Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-border rounded-lg p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Dispatches</p>
-          <p className="text-xl font-bold text-slate-primary mt-1">{stats.total}</p>
-          <p className="text-[10px] text-slate-secondary mt-0.5">
+        <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs">
+          <p className="text-[10px] font-bold text-ink-muted uppercase tracking-wider">Total Dispatches</p>
+          <p className="text-xl font-bold text-ink-primary mt-1 font-mono">{stats.total}</p>
+          <p className="text-[11px] text-ink-secondary mt-0.5">
             {stats.shortlisted} Shortlisted • {stats.unshortlisted} Regret
           </p>
         </div>
 
-        <div className="bg-white border border-slate-border rounded-lg p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">Delivered</p>
-          <p className="text-xl font-bold text-state-success mt-1">{stats.sent}</p>
-          <p className="text-[10px] text-slate-secondary mt-0.5">
+        <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs">
+          <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Delivered</p>
+          <p className="text-xl font-bold text-emerald-700 mt-1 font-mono">{stats.sent}</p>
+          <p className="text-[11px] text-ink-secondary mt-0.5">
             {stats.total > 0 ? Math.round((stats.sent / stats.total) * 100) : 0}% success rate
           </p>
         </div>
 
-        <div className="bg-white border border-slate-border rounded-lg p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">In Flight / Queued</p>
-          <p className="text-xl font-bold text-state-warning mt-1">{stats.queued}</p>
-          <p className="text-[10px] text-slate-secondary mt-0.5">Throttled (~1 per 2s)</p>
+        <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs">
+          <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">In Flight / Queued</p>
+          <p className="text-xl font-bold text-amber-700 mt-1 font-mono">{stats.queued}</p>
+          <p className="text-[11px] text-ink-secondary mt-0.5">Throttled (~1 per 2s)</p>
         </div>
 
-        <div className="bg-white border border-slate-border rounded-lg p-3.5 shadow-2xs">
-          <p className="text-[11px] font-semibold text-red-600 uppercase tracking-wider">Failed / Bounced</p>
-          <p className="text-xl font-bold text-state-danger mt-1">{stats.failed}</p>
-          <p className="text-[10px] text-slate-secondary mt-0.5">Retryable</p>
+        <div className="bg-surface border border-border rounded-lg p-3.5 shadow-2xs">
+          <p className="text-[10px] font-bold text-state-danger uppercase tracking-wider">Failed / Bounced</p>
+          <p className="text-xl font-bold text-state-danger mt-1 font-mono">{stats.failed}</p>
+          <p className="text-[11px] text-ink-secondary mt-0.5">Retryable</p>
         </div>
       </div>
 
       {/* Header with Sender info and Retry button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-border rounded-lg p-3.5">
-        <div className="flex items-center gap-2 text-xs text-slate-secondary">
-          <Mail className="w-4 h-4 text-brand-indigo" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface border border-border rounded-lg p-3.5">
+        <div className="flex items-center gap-2 text-xs text-ink-secondary">
+          <Mail className="w-4 h-4 text-brand shrink-0" />
           <span>
-            Connected Sender: <strong className="text-slate-primary">{sender?.address || 'System Default'}</strong>
+            Connected Sender: <strong className="text-ink-primary font-mono">{sender?.address || 'System Default'}</strong>
             {sender?.provider && (
-              <span className="uppercase text-[10px] ml-1 px-1.5 py-0.2 bg-slate-100 rounded text-slate-600">
+              <span className="uppercase text-[10px] ml-1.5 px-1.5 py-0.5 bg-surface-subtle border border-border rounded text-ink-secondary font-semibold">
                 {sender.provider}
               </span>
             )}
@@ -114,7 +114,7 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
             <button
               onClick={() => retryMutation.mutate()}
               disabled={retryMutation.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-white bg-state-danger hover:bg-red-700 transition-colors shadow-xs disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-white bg-state-danger hover:bg-red-700 transition-colors shadow-2xs disabled:opacity-50"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               {retryMutation.isPending ? 'Retrying...' : `Retry Failed (${stats.failed})`}
@@ -124,7 +124,7 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
           <button
             onClick={() => refetch()}
             disabled={isRefetching}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded border border-border bg-surface text-ink-secondary hover:text-ink-primary hover:bg-surface-hover transition-colors shadow-2xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin' : ''}`} />
             Refresh
@@ -133,10 +133,10 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
       </div>
 
       {/* Sends Table */}
-      <div className="bg-white border border-slate-border rounded-lg shadow-soft overflow-hidden">
+      <div className="bg-surface border border-border rounded-lg shadow-soft overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-border text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+            <tr className="bg-surface-subtle border-b border-border text-ink-muted font-bold uppercase text-[10px] tracking-wider">
               <th className="py-2.5 px-4">Candidate</th>
               <th className="py-2.5 px-4">Recipient Email</th>
               <th className="py-2.5 px-4">Decision Type</th>
@@ -144,18 +144,18 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
               <th className="py-2.5 px-4 text-right">Timestamp / Detail</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {sends.map((send) => (
-              <tr key={send.id} className="hover:bg-slate-50/50 transition-colors">
+              <tr key={send.id} className="hover:bg-surface-subtle transition-colors">
                 {/* Candidate Name */}
-                <td className="py-3 px-4 font-semibold text-slate-primary">
+                <td className="py-3 px-4 font-semibold text-ink-primary">
                   {send.candidateName || 'Unknown Candidate'}
                 </td>
 
                 {/* Candidate Email + Manual Correction Badge */}
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-slate-600">{send.candidateEmail}</span>
+                    <span className="font-mono text-ink-secondary">{send.candidateEmail}</span>
                     {send.isManualEmail && (
                       <span
                         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200"
@@ -171,12 +171,12 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
                 {/* Kind */}
                 <td className="py-3 px-4">
                   {send.kind === 'shortlisted' ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-state-success border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <UserCheck className="w-3 h-3" />
                       Shortlisted
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-subtle text-ink-muted border border-border">
                       <UserX className="w-3 h-3" />
                       Unshortlisted
                     </span>
@@ -186,13 +186,13 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
                 {/* Status Badge */}
                 <td className="py-3 px-4">
                   {send.status === 'sent' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-state-success border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <CheckCircle2 className="w-3 h-3" />
                       Delivered
                     </span>
                   )}
                   {send.status === 'queued' && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-state-warning border border-amber-200 animate-pulse">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 animate-pulse">
                       <Clock className="w-3 h-3" />
                       Queued
                     </span>
@@ -206,7 +206,7 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
                 </td>
 
                 {/* Details / Timestamp */}
-                <td className="py-3 px-4 text-right text-slate-secondary text-[11px]">
+                <td className="py-3 px-4 text-right text-ink-muted text-[11px] font-mono">
                   {send.status === 'sent' && send.sentAt && (
                     <span>{new Date(send.sentAt).toLocaleTimeString()}</span>
                   )}
@@ -216,7 +216,7 @@ export const EmailDeliveryView: React.FC<EmailDeliveryViewProps> = ({ batchId })
                     </span>
                   )}
                   {send.status === 'queued' && (
-                    <span className="text-slate-400">Waiting for throttle slot...</span>
+                    <span className="text-ink-muted">Waiting for rate limit slot...</span>
                   )}
                 </td>
               </tr>
