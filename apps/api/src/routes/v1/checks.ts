@@ -5,7 +5,8 @@ import {
   scoreResume,
   segmentSections,
   extractBasics,
-  convertParsedToResumeData
+  convertParsedToResumeData,
+  validateIsJobDescription
 } from '@shortlistiq/engine';
 import {
   ResumeDataSchema,
@@ -103,6 +104,16 @@ checksRouter.post(
           400,
           'INVALID_JD',
           'Job description is required and must contain at least 30 characters.'
+        );
+      }
+
+      // Candidate-side checker accuracy: verify text resembles a legitimate job description
+      const jdValidation = validateIsJobDescription(jdText);
+      if (!jdValidation.isValid) {
+        throw new AppError(
+          400,
+          'INVALID_JD',
+          jdValidation.reason || 'The provided text does not appear to be a job description. Please paste a job description with requirements or responsibilities.'
         );
       }
 

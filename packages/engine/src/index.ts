@@ -9,6 +9,8 @@ export * from './ingest/index.js';
 export * from './extract/index.js';
 export * from './jd/index.js';
 export * from './match/index.js';
+export * from './decide/index.js';
+
 
 
 

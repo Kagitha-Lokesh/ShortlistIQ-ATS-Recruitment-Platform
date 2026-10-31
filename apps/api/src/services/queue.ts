@@ -13,7 +13,17 @@ import {
 } from '../repositories/index.js';
 import { storageService, STORAGE_BUCKETS } from './storage.js';
 import { parsePdf } from './pdf.js';
-import { extractBasics, scoreResume, scoreAgainstCriteria, CriterionItem } from '@shortlistiq/engine';
+import {
+  extractBasics,
+  scoreResume,
+  scoreAgainstCriteria,
+  CriterionItem,
+  extractResumeProfile,
+  stripProtectedDemographics,
+  parseJobDescription,
+  matchProfileAgainstJob,
+  evaluateDecisionPolicy
+} from '@shortlistiq/engine';
 import {
   CandidateStatus,
   CandidateDecision,
@@ -389,6 +399,61 @@ class QueueService {
 
       if (isDuplicate) {
         decision = CandidateDecision.needs_review;
+      }
+
+      // Accuracy Upgrade: ENGINE_V2 Feature Flag (false by default; true or shadow)
+      const isEngineV2 = process.env.ENGINE_V2 === 'true';
+      const isShadowMode = process.env.ENGINE_V2 === 'shadow';
+
+      if (isEngineV2 || isShadowMode) {
+        try {
+          const profile = extractResumeProfile(parsedText);
+          const blindProfile = stripProtectedDemographics(profile);
+          const jdRequirements = parseJobDescription(batch.jdText);
+          const matchResult = matchProfileAgainstJob(blindProfile, jdRequirements);
+          const decisionAudit = evaluateDecisionPolicy(matchResult, {
+            cutoff,
+            parseReport: (candidate as any).parseQuality
+          });
+
+          const v2Score = matchResult.overallScore;
+          const v2Decision =
+            decisionAudit.recommendation === 'recommended_shortlist'
+              ? CandidateDecision.shortlisted
+              : decisionAudit.recommendation === 'needs_review'
+              ? CandidateDecision.needs_review
+              : CandidateDecision.unshortlisted;
+
+          if (isEngineV2) {
+            score = v2Score;
+            decision = v2Decision;
+            breakdown = {
+              overallScore: v2Score,
+              mustHaveScore: matchResult.mustHaveScore,
+              niceToHaveScore: matchResult.niceToHaveScore,
+              experienceScore: matchResult.experienceScore,
+              educationScore: matchResult.educationScore,
+              matchedSkills: profile.skills.map((s) => s.canonicalSkill),
+              detectedYearsExperience: profile.totalExperienceYears,
+              decisionAudit
+            };
+            criteriaResults = matchResult.results;
+          } else if (isShadowMode) {
+            logger.info(
+              {
+                candidateId,
+                v1Score: score,
+                v2Score,
+                v1Decision: decision,
+                v2Decision,
+                hasDiscrepancy: score !== v2Score || decision !== v2Decision
+              },
+              '[ENGINE_V2 SHADOW MODE] Candidate evaluation discrepancy comparison'
+            );
+          }
+        } catch (err) {
+          logger.warn({ err, candidateId }, 'Engine V2 execution failed, retained V1 output');
+        }
       }
 
       // CRITICAL PRESERVATION RULE:
