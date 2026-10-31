@@ -211,3 +211,4 @@ To ensure backward compatibility and zero downtime:
   - `ENGINE_V2=shadow`: Runs Engine V2 in shadow mode, recording discrepancies without impacting active decisions.
 - All database columns introduced will be nullable or provide sensible defaults.
 - Baseline snapshot has been captured in `.data/snapshot-baseline.json` prior to engine modifications.
+
