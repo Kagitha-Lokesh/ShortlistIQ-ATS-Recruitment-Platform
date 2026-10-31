@@ -34,7 +34,7 @@ export function animateScoreRing(
   circleEl: SVGCircleElement | null,
   targetScore: number,
   radius = 54,
-  duration = MOTION_DURATIONS.emphasis
+  duration: number = MOTION_DURATIONS.emphasis
 ): gsap.core.Tween | null {
   if (!circleEl) return null;
 
@@ -64,7 +64,7 @@ export function animateScoreRing(
 export function animateCounter(
   targetEl: HTMLElement | null,
   targetScore: number,
-  duration = MOTION_DURATIONS.emphasis
+  duration: number = MOTION_DURATIONS.emphasis
 ): gsap.core.Tween | null {
   if (!targetEl) return null;
 
@@ -94,7 +94,7 @@ export function animateCounter(
 export function animateProgressBar(
   barEl: HTMLElement | null,
   targetPercent: number,
-  duration = MOTION_DURATIONS.standard
+  duration: number = MOTION_DURATIONS.standard
 ): gsap.core.Tween | null {
   if (!barEl) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { shortlistApi } from '../../lib/api.js';
@@ -22,10 +22,14 @@ import { CardSkeleton } from '../../components/ui/Skeleton.js';
 import { Button } from '../../components/ui/Button.js';
 import { Badge } from '../../components/ui/Badge.js';
 import { Card } from '../../components/ui/Card.js';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { isReducedMotion, MOTION_DURATIONS, MOTION_EASES } from '../../lib/motion.js';
 
 export const DashboardPage: React.FC = () => {
   const { organization } = useAuth();
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [showEmailSettingsModal, setShowEmailSettingsModal] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -38,10 +42,30 @@ export const DashboardPage: React.FC = () => {
   const stats = data?.stats;
   const recentBatches = data?.recentBatches || [];
 
+  useGSAP(
+    () => {
+      if (!containerRef.current || isReducedMotion() || isLoading) return;
+
+      gsap.fromTo(
+        containerRef.current.querySelectorAll('.animate-fade-up'),
+        { opacity: 0, y: 6 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: MOTION_DURATIONS.standard,
+          stagger: 0.03,
+          ease: MOTION_EASES.standard,
+          clearProps: 'transform'
+        }
+      );
+    },
+    { dependencies: [isLoading], scope: containerRef }
+  );
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div ref={containerRef} className="space-y-6 max-w-6xl mx-auto">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+      <div className="animate-fade-up flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink-primary">
             Screening & Batch Dashboard

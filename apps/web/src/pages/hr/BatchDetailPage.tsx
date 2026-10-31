@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { shortlistApi } from '../../lib/api.js';
@@ -48,6 +48,9 @@ import {
 import { CardSkeleton } from '../../components/ui/Skeleton.js';
 import { Button } from '../../components/ui/Button.js';
 import { Badge } from '../../components/ui/Badge.js';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { Flip, isReducedMotion, MOTION_DURATIONS, MOTION_EASES } from '../../lib/motion.js';
 import { useToast } from '../../context/ToastContext.js';
 
 export const BatchDetailPage: React.FC = () => {
@@ -81,6 +84,10 @@ export const BatchDetailPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(50);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
+
+  // Motion refs & Flip state tracking
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const flipStateRef = useRef<any>(null);
 
   // Blind Review Mode (anonymizes candidates to eliminate bias)
   const [isBlindMode, setIsBlindMode] = useState<boolean>(() => {
@@ -184,6 +191,13 @@ export const BatchDetailPage: React.FC = () => {
     }
   });
 
+  const triggerDecisionWithFlip = (candidateIds: string[], decision: 'shortlisted' | 'unshortlisted') => {
+    if (!isReducedMotion()) {
+      flipStateRef.current = Flip.getState('.candidate-row');
+    }
+    bulkDecisionMutation.mutate({ candidateIds, decision });
+  };
+
   // Export CSV handler
   const handleExportCsv = async () => {
     if (!batchId || !batch) return;
@@ -269,6 +283,41 @@ export const BatchDetailPage: React.FC = () => {
     return filteredAndSortedCandidates.slice(start, start + pageSize);
   }, [filteredAndSortedCandidates, currentPage, pageSize]);
 
+  // Flip & row motion on candidate status updates & tab changes
+  useGSAP(
+    () => {
+      if (!tableContainerRef.current || isReducedMotion()) return;
+
+      if (flipStateRef.current) {
+        Flip.from(flipStateRef.current, {
+          duration: MOTION_DURATIONS.emphasis,
+          ease: MOTION_EASES.standard,
+          simple: true,
+          onComplete: () => {
+            flipStateRef.current = null;
+          }
+        });
+      } else {
+        const rows = tableContainerRef.current.querySelectorAll('.candidate-row');
+        if (rows.length > 0) {
+          gsap.fromTo(
+            rows,
+            { opacity: 0, x: -6 },
+            {
+              opacity: 1,
+              x: 0,
+              duration: MOTION_DURATIONS.standard,
+              stagger: 0.02,
+              ease: MOTION_EASES.standard,
+              clearProps: 'transform'
+            }
+          );
+        }
+      }
+    },
+    { dependencies: [filterDecision, paginatedCandidates.length], scope: tableContainerRef }
+  );
+
   // Bulk selection helpers
   const allCurrentPageSelected =
     paginatedCandidates.length > 0 &&
@@ -320,12 +369,12 @@ export const BatchDetailPage: React.FC = () => {
       } else if (e.key.toLowerCase() === 's') {
         const cand = selectedCandidate || paginatedCandidates[activeCandidateIndex];
         if (cand && batch && batch.status !== 'finalized') {
-          bulkDecisionMutation.mutate({ candidateIds: [cand.id], decision: 'shortlisted' });
+          triggerDecisionWithFlip([cand.id], 'shortlisted');
         }
       } else if (e.key.toLowerCase() === 'u') {
         const cand = selectedCandidate || paginatedCandidates[activeCandidateIndex];
         if (cand && batch && batch.status !== 'finalized') {
-          bulkDecisionMutation.mutate({ candidateIds: [cand.id], decision: 'unshortlisted' });
+          triggerDecisionWithFlip([cand.id], 'unshortlisted');
         }
       }
     };
@@ -691,10 +740,7 @@ export const BatchDetailPage: React.FC = () => {
                       size="sm"
                       variant="primary"
                       onClick={() =>
-                        bulkDecisionMutation.mutate({
-                          candidateIds: selectedCandidateIds,
-                          decision: 'shortlisted'
-                        })
+                        triggerDecisionWithFlip(selectedCandidateIds, 'shortlisted')
                       }
                       isLoading={bulkDecisionMutation.isPending}
                       leftIcon={<UserCheck className="w-3.5 h-3.5" />}
@@ -706,10 +752,7 @@ export const BatchDetailPage: React.FC = () => {
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        bulkDecisionMutation.mutate({
-                          candidateIds: selectedCandidateIds,
-                          decision: 'unshortlisted'
-                        })
+                        triggerDecisionWithFlip(selectedCandidateIds, 'unshortlisted')
                       }
                       isLoading={bulkDecisionMutation.isPending}
                       leftIcon={<UserX className="w-3.5 h-3.5" />}
@@ -731,7 +774,7 @@ export const BatchDetailPage: React.FC = () => {
           )}
 
           {/* Candidate Pipeline Table */}
-          <div className="bg-surface border border-border rounded-xl shadow-xs overflow-hidden">
+          <div ref={tableContainerRef} className="bg-surface border border-border rounded-xl shadow-xs overflow-hidden">
             {/* Table Filters & Exact Tabs */}
             <div className="p-4 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-surface-subtle/50">
               {/* Exact Status Tabs */}
@@ -746,6 +789,9 @@ export const BatchDetailPage: React.FC = () => {
                   <button
                     key={id}
                     onClick={() => {
+                      if (!isReducedMotion()) {
+                        flipStateRef.current = Flip.getState('.candidate-row');
+                      }
                       setFilterDecision(id);
                       setCurrentPage(1);
                     }}
@@ -853,11 +899,12 @@ export const BatchDetailPage: React.FC = () => {
                       return (
                         <tr
                           key={candidate.id}
+                          data-flip-id={candidate.id}
                           onClick={() => {
                             setActiveCandidateIndex(idx);
                             setSelectedCandidate(candidate);
                           }}
-                          className={`hover:bg-surface-hover/80 transition-colors cursor-pointer ${
+                          className={`candidate-row hover:bg-surface-hover/80 transition-colors cursor-pointer ${
                             isSelected
                               ? 'bg-primary/5'
                               : isKeyboardActive
