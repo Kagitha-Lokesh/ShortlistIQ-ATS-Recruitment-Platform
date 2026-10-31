@@ -251,6 +251,17 @@ export const SuggestionsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Pane: Suggestions List (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
+          {/* Ethical AI Advisory */}
+          <div className="p-3 bg-indigo-50/50 border border-indigo-200 rounded-lg flex items-start gap-2.5 text-xs text-slate-700">
+            <Sparkles className="w-4 h-4 text-brand-indigo shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-slate-primary block">Truthful Resume Optimization</span>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Suggestions only rephrase and better highlight qualifications already grounded in your uploaded resume. Never fabricate credentials or claim tools you have not used.
+              </p>
+            </div>
+          </div>
+
           {/* Filter Bar */}
           <div className="flex items-center justify-between bg-card border border-slate-border rounded-lg p-2 shadow-soft">
             <div className="flex gap-1 text-xs">
