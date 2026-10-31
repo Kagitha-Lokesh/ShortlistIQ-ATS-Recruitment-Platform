@@ -1,5 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { isReducedMotion, MOTION_DURATIONS, MOTION_EASES } from '../../lib/motion.js';
 
 export interface DrawerProps {
   isOpen: boolean;
@@ -20,6 +23,10 @@ export const Drawer: React.FC<DrawerProps> = ({
   footer,
   size = 'xl'
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -36,6 +43,35 @@ export const Drawer: React.FC<DrawerProps> = ({
     };
   }, [isOpen, onClose]);
 
+  useGSAP(
+    () => {
+      if (!isOpen || isReducedMotion()) return;
+
+      if (backdropRef.current) {
+        gsap.fromTo(
+          backdropRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: MOTION_DURATIONS.standard, ease: MOTION_EASES.standard }
+        );
+      }
+
+      if (panelRef.current) {
+        gsap.fromTo(
+          panelRef.current,
+          { x: 32, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: MOTION_DURATIONS.emphasis,
+            ease: MOTION_EASES.standard,
+            clearProps: 'transform'
+          }
+        );
+      }
+    },
+    { dependencies: [isOpen], scope: containerRef }
+  );
+
   if (!isOpen) return null;
 
   const widthStyles = {
@@ -47,9 +83,15 @@ export const Drawer: React.FC<DrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-50 overflow-hidden"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Backdrop */}
       <div
+        ref={backdropRef}
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         aria-hidden="true"
@@ -57,6 +99,7 @@ export const Drawer: React.FC<DrawerProps> = ({
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         <div
+          ref={panelRef}
           className={`w-screen ${widthStyles[size]} bg-surface border-l border-border shadow-raised flex flex-col`}
         >
           {/* Header */}

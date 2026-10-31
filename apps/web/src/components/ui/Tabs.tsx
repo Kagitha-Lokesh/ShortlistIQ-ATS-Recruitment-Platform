@@ -1,4 +1,7 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useRef } from 'react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { isReducedMotion, MOTION_DURATIONS, MOTION_EASES } from '../../lib/motion.js';
 
 interface TabsContextValue {
   value: string;
@@ -84,10 +87,32 @@ export const TabsContent: React.FC<TabsContentProps> = ({ value, children, class
   const ctx = useContext(TabsContext);
   if (!ctx) throw new Error('TabsContent must be used within Tabs');
 
-  if (ctx.value !== value) return null;
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isSelected = ctx.value === value;
+
+  useGSAP(
+    () => {
+      if (!isSelected || !contentRef.current || isReducedMotion()) return;
+
+      gsap.fromTo(
+        contentRef.current,
+        { opacity: 0, y: 4 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: MOTION_DURATIONS.standard,
+          ease: MOTION_EASES.standard,
+          clearProps: 'transform'
+        }
+      );
+    },
+    { dependencies: [isSelected], scope: contentRef }
+  );
+
+  if (!isSelected) return null;
 
   return (
-    <div role="tabpanel" className={`pt-4 ${className}`}>
+    <div ref={contentRef} role="tabpanel" className={`pt-4 ${className}`}>
       {children}
     </div>
   );

@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { isReducedMotion, MOTION_DURATIONS, MOTION_EASES } from '../../lib/motion.js';
 
 export interface MatchScoreMeterProps {
   score: number;
@@ -16,6 +19,25 @@ export const MatchScoreMeter: React.FC<MatchScoreMeterProps> = ({
   className = ''
 }) => {
   const clampedScore = Math.max(0, Math.min(100, Math.round(score)));
+  const barRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (!barRef.current || isReducedMotion()) return;
+
+      gsap.fromTo(
+        barRef.current,
+        { width: '0%' },
+        {
+          width: `${clampedScore}%`,
+          duration: MOTION_DURATIONS.emphasis,
+          ease: MOTION_EASES.standard
+        }
+      );
+    },
+    { dependencies: [clampedScore], scope: containerRef }
+  );
 
   const getTierInfo = (s: number) => {
     if (s >= 80) {
@@ -43,6 +65,7 @@ export const MatchScoreMeter: React.FC<MatchScoreMeterProps> = ({
 
   return (
     <div
+      ref={containerRef}
       role="meter"
       aria-label={label}
       aria-valuenow={clampedScore}
@@ -61,7 +84,8 @@ export const MatchScoreMeter: React.FC<MatchScoreMeterProps> = ({
       {/* Progress Track */}
       <div className="w-full h-2 rounded-full bg-surface-subtle border border-border overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-300 ${tier.bgColor}`}
+          ref={barRef}
+          className={`h-full rounded-full ${tier.bgColor}`}
           style={{ width: `${clampedScore}%` }}
         />
       </div>

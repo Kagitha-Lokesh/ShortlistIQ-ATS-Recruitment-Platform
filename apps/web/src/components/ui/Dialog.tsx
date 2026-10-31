@@ -1,5 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { isReducedMotion, MOTION_DURATIONS, MOTION_EASES } from '../../lib/motion.js';
 
 export interface DialogProps {
   isOpen: boolean;
@@ -20,6 +23,10 @@ export const Dialog: React.FC<DialogProps> = ({
   footer,
   maxWidth = 'md'
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -36,6 +43,36 @@ export const Dialog: React.FC<DialogProps> = ({
     };
   }, [isOpen, onClose]);
 
+  useGSAP(
+    () => {
+      if (!isOpen || isReducedMotion()) return;
+
+      if (backdropRef.current) {
+        gsap.fromTo(
+          backdropRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: MOTION_DURATIONS.standard, ease: MOTION_EASES.standard }
+        );
+      }
+
+      if (surfaceRef.current) {
+        gsap.fromTo(
+          surfaceRef.current,
+          { opacity: 0, scale: 0.98, y: 6 },
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: MOTION_DURATIONS.standard,
+            ease: MOTION_EASES.standard,
+            clearProps: 'transform'
+          }
+        );
+      }
+    },
+    { dependencies: [isOpen], scope: containerRef }
+  );
+
   if (!isOpen) return null;
 
   const widthStyles = {
@@ -47,9 +84,15 @@ export const Dialog: React.FC<DialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Backdrop */}
       <div
+        ref={backdropRef}
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         aria-hidden="true"
@@ -57,6 +100,7 @@ export const Dialog: React.FC<DialogProps> = ({
 
       {/* Dialog Surface */}
       <div
+        ref={surfaceRef}
         className={`relative w-full ${widthStyles[maxWidth]} bg-surface border border-border rounded-lg shadow-raised text-ink-primary overflow-hidden flex flex-col z-10`}
       >
         {/* Header */}

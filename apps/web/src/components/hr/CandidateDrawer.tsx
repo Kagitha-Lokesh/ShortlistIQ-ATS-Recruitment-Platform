@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { shortlistApi } from '../../lib/api.js';
 import {
   X,
@@ -26,6 +26,16 @@ import {
 import { Button } from '../ui/Button.js';
 import { Badge } from '../ui/Badge.js';
 import { useToast } from '../../context/ToastContext.js';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import {
+  animateScoreRing,
+  animateCounter,
+  animateProgressBar,
+  isReducedMotion,
+  MOTION_DURATIONS,
+  MOTION_EASES
+} from '../../lib/motion.js';
 
 interface CandidateDrawerProps {
   batchId: string;
@@ -52,6 +62,11 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [isUpdatingDecision, setIsUpdatingDecision] = useState(false);
   const [isBlindMode, setIsBlindMode] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const circleRef = useRef<SVGCircleElement>(null);
+  const scoreNumberRef = useRef<HTMLSpanElement>(null);
+  const barRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Requirement override modal state
   const [overrideCriterion, setOverrideCriterion] = useState<any | null>(null);
@@ -140,10 +155,67 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
     }
   };
 
-  if (!isOpen || !candidate) return null;
+  const score = candidate?.score ?? 0;
+  const breakdown = candidate?.breakdown || {};
 
-  const score = candidate.score ?? 0;
-  const breakdown = candidate.breakdown || {};
+  // GSAP animation for score ring and breakdown bars in drawer
+  useGSAP(
+    () => {
+      if (!isOpen || !candidate || !containerRef.current) return;
+
+      if (isReducedMotion()) {
+        if (circleRef.current) {
+          gsap.set(circleRef.current, { strokeDashoffset: 188 - (188 * score) / 100 });
+        }
+        if (scoreNumberRef.current) {
+          scoreNumberRef.current.textContent = `${score}%`;
+        }
+        return;
+      }
+
+      // Drawer panel slide-in
+      gsap.fromTo(
+        containerRef.current,
+        { x: 30, opacity: 0 },
+        { x: 0, opacity: 1, duration: MOTION_DURATIONS.emphasis, ease: MOTION_EASES.standard, clearProps: 'transform' }
+      );
+
+      // Score ring
+      animateScoreRing(circleRef.current, score, 30, MOTION_DURATIONS.emphasis);
+
+      // Counter
+      if (scoreNumberRef.current) {
+        const obj = { val: 0 };
+        gsap.to(obj, {
+          val: score,
+          duration: MOTION_DURATIONS.emphasis,
+          ease: MOTION_EASES.standard,
+          onUpdate: () => {
+            if (scoreNumberRef.current) {
+              scoreNumberRef.current.textContent = `${Math.round(obj.val)}%`;
+            }
+          }
+        });
+      }
+
+      // Breakdown bars
+      const barVals = [
+        breakdown.keywordScore ?? score,
+        breakdown.skillsScore ?? score,
+        breakdown.experienceScore ?? score,
+        breakdown.formattingScore ?? 85,
+        breakdown.readabilityScore ?? 90
+      ];
+      barRefs.current.forEach((bar, idx) => {
+        if (bar) {
+          animateProgressBar(bar, barVals[idx] ?? 0, MOTION_DURATIONS.standard);
+        }
+      });
+    },
+    { dependencies: [isOpen, candidate?.id, score], scope: containerRef }
+  );
+
+  if (!isOpen || !candidate) return null;
   const criteriaResults: any[] = Array.isArray(candidate.criteriaResults)
     ? candidate.criteriaResults
     : [];
@@ -162,7 +234,7 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/40 backdrop-blur-xs flex justify-end">
-      <div className="w-full max-w-2xl bg-surface h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+      <div ref={containerRef} className="w-full max-w-2xl bg-surface h-full shadow-2xl flex flex-col">
         {/* Drawer Header */}
         <div className="p-4 sm:p-5 border-b border-border bg-surface-subtle flex items-start justify-between">
           <div className="min-w-0 flex-1 pr-3">
@@ -308,6 +380,7 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                     <svg className="w-18 h-18 -rotate-90">
                       <circle cx="36" cy="36" r="30" stroke="#e2e8f0" strokeWidth="6" fill="none" />
                       <circle
+                        ref={circleRef}
                         cx="36"
                         cy="36"
                         r="30"
@@ -319,7 +392,7 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                         fill="none"
                       />
                     </svg>
-                    <span className="absolute text-lg font-bold text-ink-primary tabular-nums">{score}%</span>
+                    <span ref={scoreNumberRef} className="absolute text-lg font-bold text-ink-primary tabular-nums">{score}%</span>
                   </div>
                   <span className="text-[10px] text-ink-muted font-medium uppercase mt-1">
                     Match Estimate
@@ -333,14 +406,18 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                     { label: 'Experience Relevance', val: breakdown.experienceScore ?? score },
                     { label: 'Formatting Health', val: breakdown.formattingScore ?? 85 },
                     { label: 'Readability', val: breakdown.readabilityScore ?? 90 }
-                  ].map(({ label, val }) => (
+                  ].map(({ label, val }, idx) => (
                     <div key={label} className="space-y-0.5">
                       <div className="flex justify-between text-[11px]">
                         <span className="text-ink-secondary">{label}</span>
                         <span className="font-semibold text-ink-primary tabular-nums">{val}%</span>
                       </div>
                       <div className="w-full bg-surface-muted h-1 rounded-full overflow-hidden">
-                        <div className="bg-primary h-full rounded-full" style={{ width: `${val}%` }} />
+                        <div
+                          ref={(el) => (barRefs.current[idx] = el)}
+                          className="bg-primary h-full rounded-full"
+                          style={{ width: `${val}%` }}
+                        />
                       </div>
                     </div>
                   ))}

@@ -25,20 +25,31 @@ import gsap from 'gsap';
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
+  const explainerRef = useRef<HTMLElement>(null);
+  const hrSectionRef = useRef<HTMLElement>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  useGSAP(() => {
-    if (typeof window === 'undefined') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Lazy-load landing motion module so heavy ScrollTrigger code is code-split
+  useGSAP(
+    () => {
+      let cleanupFn: (() => void) | undefined;
 
-    if (heroRef.current) {
-      gsap.fromTo(
-        heroRef.current.querySelectorAll('.hero-fade'),
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.35, stagger: 0.07, ease: 'power2.out' }
-      );
-    }
-  }, { scope: heroRef });
+      import('./landingMotion.js').then(({ initLandingMotion }) => {
+        cleanupFn = initLandingMotion({
+          heroElement: heroRef.current,
+          explainerElement: explainerRef.current,
+          hrSectionElement: hrSectionRef.current
+        });
+      });
+
+      return () => {
+        if (cleanupFn) {
+          cleanupFn();
+        }
+      };
+    },
+    { scope: heroRef }
+  );
 
   const faqs = [
     {
@@ -106,7 +117,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 2. Three-Step Explainer */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6">
+      <section ref={explainerRef} className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-10">
           <span className="text-[11px] font-mono uppercase tracking-wider text-ink-muted block">
             How It Works
@@ -118,7 +129,7 @@ export const LandingPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Step 1 */}
-          <Card className="p-6 space-y-3">
+          <Card className="p-6 space-y-3 step-card">
             <div className="w-8 h-8 rounded bg-surface-subtle border border-border flex items-center justify-center font-bold text-xs text-ink-primary">
               01
             </div>
@@ -129,7 +140,7 @@ export const LandingPage: React.FC = () => {
           </Card>
 
           {/* Step 2 */}
-          <Card className="p-6 space-y-3">
+          <Card className="p-6 space-y-3 step-card">
             <div className="w-8 h-8 rounded bg-surface-subtle border border-border flex items-center justify-center font-bold text-xs text-ink-primary">
               02
             </div>
@@ -140,7 +151,7 @@ export const LandingPage: React.FC = () => {
           </Card>
 
           {/* Step 3 */}
-          <Card className="p-6 space-y-3">
+          <Card className="p-6 space-y-3 step-card">
             <div className="w-8 h-8 rounded bg-surface-subtle border border-border flex items-center justify-center font-bold text-xs text-ink-primary">
               03
             </div>
@@ -153,7 +164,7 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* 3. Section for HR Teams */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6">
+      <section ref={hrSectionRef} className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="rounded-lg border border-border bg-surface p-6 sm:p-10 shadow-subtle flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-3 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-semibold bg-surface-subtle border border-border text-ink-secondary">

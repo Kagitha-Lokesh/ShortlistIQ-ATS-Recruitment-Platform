@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -22,12 +22,27 @@ import { useToast } from '../../context/ToastContext.js';
 import { Button } from '../../components/ui/Button.js';
 import { Badge } from '../../components/ui/Badge.js';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.js';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import {
+  animateScoreRing,
+  animateCounter,
+  animateProgressBar,
+  isReducedMotion,
+  MOTION_DURATIONS,
+  MOTION_EASES
+} from '../../lib/motion.js';
 
 export const ResultsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const circleRef = useRef<SVGCircleElement>(null);
+  const scoreNumberRef = useRef<HTMLSpanElement>(null);
+  const barRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [check, setCheck] = useState<CandidateCheckData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,10 +147,73 @@ export const ResultsPage: React.FC = () => {
       ? { text: 'text-state-warning', stroke: '#92400E', label: 'Moderate Alignment (Needs Optimization)', variant: 'needs_review' as const }
       : { text: 'text-state-danger', stroke: '#991B1B', label: 'Low Keyword Alignment', variant: 'unshortlisted' as const };
 
+  // GSAP animation for score ring, numeric counter, and breakdown progress bars
+  useGSAP(
+    () => {
+      if (!check || !containerRef.current) return;
+
+      if (isReducedMotion()) {
+        if (circleRef.current) {
+          gsap.set(circleRef.current, { strokeDashoffset });
+        }
+        if (scoreNumberRef.current) {
+          scoreNumberRef.current.textContent = overallScore.toString();
+        }
+        barRefs.current.forEach((bar, idx) => {
+          if (!bar) return;
+          const val = [
+            breakdown?.keywordScore ?? 0,
+            breakdown?.skillsScore ?? 0,
+            breakdown?.experienceScore ?? 0,
+            breakdown?.formattingScore ?? 0,
+            breakdown?.readabilityScore ?? 0
+          ][idx] ?? 0;
+          gsap.set(bar, { width: `${val}%` });
+        });
+        return;
+      }
+
+      // 1. Entrance stagger for results sections
+      gsap.fromTo(
+        containerRef.current.querySelectorAll('.animate-fade-up'),
+        { opacity: 0, y: 8 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: MOTION_DURATIONS.standard,
+          stagger: 0.04,
+          ease: MOTION_EASES.standard,
+          clearProps: 'transform'
+        }
+      );
+
+      // 2. Animate Circular Score Ring to genuine value
+      animateScoreRing(circleRef.current, overallScore, radius, MOTION_DURATIONS.emphasis);
+
+      // 3. Animate Counter to genuine value
+      animateCounter(scoreNumberRef.current, overallScore, MOTION_DURATIONS.emphasis);
+
+      // 4. Animate Breakdown Progress Bars
+      const scores = [
+        breakdown?.keywordScore ?? 0,
+        breakdown?.skillsScore ?? 0,
+        breakdown?.experienceScore ?? 0,
+        breakdown?.formattingScore ?? 0,
+        breakdown?.readabilityScore ?? 0
+      ];
+      barRefs.current.forEach((bar, idx) => {
+        if (bar) {
+          animateProgressBar(bar, scores[idx] ?? 0, MOTION_DURATIONS.emphasis);
+        }
+      });
+    },
+    { dependencies: [check?.id, overallScore], scope: containerRef }
+  );
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 pb-16">
+    <div ref={containerRef} className="max-w-4xl mx-auto px-4 py-6 space-y-6 pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+      <div className="animate-fade-up flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Link to="/checker" className="text-xs text-ink-muted hover:text-ink-primary flex items-center gap-1 transition-colors">
@@ -188,7 +266,7 @@ export const ResultsPage: React.FC = () => {
       </div>
 
       {/* Main Score & Plain-Language Summary Card */}
-      <Card className="shadow-subtle p-6 flex flex-col md:flex-row items-center gap-8">
+      <Card className="animate-fade-up shadow-subtle p-6 flex flex-col md:flex-row items-center gap-8">
         {/* Circular SVG Ring showing true value */}
         <div className="relative flex-shrink-0 flex items-center justify-center">
           <svg className="w-32 h-32 transform -rotate-90">
@@ -201,6 +279,7 @@ export const ResultsPage: React.FC = () => {
               fill="transparent"
             />
             <circle
+              ref={circleRef}
               cx="64"
               cy="64"
               r={radius}
@@ -210,11 +289,10 @@ export const ResultsPage: React.FC = () => {
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
               fill="transparent"
-              className="transition-all duration-700 ease-out"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className={`text-3xl font-extrabold tabular-nums ${scoreTier.text}`}>{overallScore}</span>
+            <span ref={scoreNumberRef} className={`text-3xl font-extrabold tabular-nums ${scoreTier.text}`}>{overallScore}</span>
             <span className="text-[10px] font-semibold text-ink-muted tracking-wider uppercase">Out of 100</span>
           </div>
         </div>
@@ -284,7 +362,8 @@ export const ResultsPage: React.FC = () => {
             </div>
             <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[0] = el)}
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${breakdown?.keywordScore ?? 0}%` }}
               />
             </div>
@@ -298,7 +377,8 @@ export const ResultsPage: React.FC = () => {
             </div>
             <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[1] = el)}
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${breakdown?.skillsScore ?? 0}%` }}
               />
             </div>
@@ -314,7 +394,8 @@ export const ResultsPage: React.FC = () => {
             </div>
             <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-700 rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[2] = el)}
+                className="h-full bg-emerald-700 rounded-full"
                 style={{ width: `${breakdown?.experienceScore ?? 0}%` }}
               />
             </div>
@@ -328,7 +409,8 @@ export const ResultsPage: React.FC = () => {
             </div>
             <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-slate-700 rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[3] = el)}
+                className="h-full bg-slate-700 rounded-full"
                 style={{ width: `${breakdown?.formattingScore ?? 0}%` }}
               />
             </div>
@@ -342,7 +424,8 @@ export const ResultsPage: React.FC = () => {
             </div>
             <div className="w-full h-2 bg-surface-subtle border border-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
+                ref={(el) => (barRefs.current[4] = el)}
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${breakdown?.readabilityScore ?? 0}%` }}
               />
             </div>
