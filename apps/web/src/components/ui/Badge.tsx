@@ -1,9 +1,19 @@
 import React from 'react';
+import {
+  CheckCircle2,
+  AlertCircle,
+  MinusCircle,
+  XCircle,
+  FileCheck,
+  AlertTriangle,
+  AlertOctagon
+} from 'lucide-react';
 
 export type BadgeVariant =
   | 'shortlisted'
   | 'needs_review'
   | 'unshortlisted'
+  | 'failed'
   | 'parse_ok'
   | 'parse_partial'
   | 'parse_unreadable'
@@ -27,6 +37,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   shortlisted: 'bg-emerald-50 text-emerald-800 border-emerald-200',
   needs_review: 'bg-amber-50 text-amber-800 border-amber-300',
   unshortlisted: 'bg-slate-100 text-slate-700 border-slate-200',
+  failed: 'bg-red-50 text-red-800 border-red-200',
   parse_ok: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   parse_partial: 'bg-amber-50 text-amber-800 border-amber-200',
   parse_unreadable: 'bg-red-50 text-red-800 border-red-200',
@@ -57,5 +68,98 @@ export const Badge: React.FC<BadgeProps> = ({
     >
       {children}
     </span>
+  );
+};
+
+export interface DecisionStatusBadgeProps {
+  decision: 'recommended_shortlist' | 'needs_review' | 'recommended_not_shortlisted' | 'shortlisted' | 'unshortlisted' | 'failed' | string;
+  size?: 'sm' | 'md';
+  className?: string;
+}
+
+/**
+ * High-stakes decision badge: NEVER relies on color alone; always pairs icon with verbatim text.
+ */
+export const DecisionStatusBadge: React.FC<DecisionStatusBadgeProps> = ({
+  decision,
+  size = 'md',
+  className = ''
+}) => {
+  const norm = (decision || '').toLowerCase().replace(/[\s-]/g, '_');
+
+  if (norm === 'recommended_shortlist' || norm === 'shortlisted') {
+    return (
+      <Badge variant="shortlisted" size={size} className={className}>
+        <CheckCircle2 className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
+        <span>Recommended Shortlist</span>
+      </Badge>
+    );
+  }
+
+  if (norm === 'needs_review') {
+    return (
+      <Badge variant="needs_review" size={size} className={className}>
+        <AlertCircle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
+        <span>Needs Review</span>
+      </Badge>
+    );
+  }
+
+  if (norm === 'failed') {
+    return (
+      <Badge variant="failed" size={size} className={className}>
+        <XCircle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
+        <span>Knockout Flagged</span>
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="unshortlisted" size={size} className={className}>
+      <MinusCircle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
+      <span>Not Shortlisted</span>
+    </Badge>
+  );
+};
+
+export interface ParseQualityBadgeProps {
+  status: 'OK' | 'PARTIAL' | 'UNREADABLE' | string;
+  size?: 'sm' | 'md';
+  className?: string;
+}
+
+/**
+ * Parse quality disclosure badge: always shows icon + text status.
+ */
+export const ParseQualityBadge: React.FC<ParseQualityBadgeProps> = ({
+  status,
+  size = 'md',
+  className = ''
+}) => {
+  const norm = (status || 'OK').toUpperCase();
+
+  if (norm === 'OK') {
+    return (
+      <Badge variant="parse_ok" size={size} className={className}>
+        <FileCheck className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
+        <span>Parse Quality: OK</span>
+      </Badge>
+    );
+  }
+
+  if (norm === 'PARTIAL') {
+    return (
+      <Badge variant="parse_partial" size={size} className={className}>
+        <AlertTriangle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
+        <span>Parse Quality: Partial</span>
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="parse_unreadable" size={size} className={className}>
+      <AlertOctagon className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
+      <span>Parse Quality: Unreadable</span>
+    </Badge>
   );
 };

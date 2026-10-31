@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,48 +8,70 @@
   :root {
     color-scheme: light only;
 
-    /* Surface & Ground Tokens */
-    --ground: #F9FAFB;
+    /* Semantic Core Color Roles (Light Theme Only) */
+    --background: #F8FAFC;
     --surface: #FFFFFF;
-    --surface-subtle: #F3F4F6;
+    --surface-subtle: #F1F5F9;
     --surface-hover: #F8FAFC;
-
-    /* Border & Divider Tokens */
-    --border: #E5E7EB;
-    --border-strong: #D1D5DB;
-    --rule: #F3F4F6;
+    --foreground: #0F172A;
+    --card: #FFFFFF;
+    --card-foreground: #0F172A;
+    --popover: #FFFFFF;
+    --popover-foreground: #0F172A;
 
     /* Text & Ink Tokens */
-    --text-primary: #111827;
-    --text-secondary: #4B5563;
-    --text-muted: #6B7280;
-    --text-subtle: #9CA3AF;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --text-subtle: #94A3B8;
 
-    /* Primary Accent (Achromatic Ink / Deep Slate Navy) */
+    /* Primary Neutral Action (Achromatic Ink) */
     --primary: #0F172A;
     --primary-hover: #1E293B;
     --primary-foreground: #FFFFFF;
 
-    /* Brand Accent for Interactive Links & Secondary Focus */
+    /* Secondary Neutral */
+    --secondary: #F1F5F9;
+    --secondary-hover: #E2E8F0;
+    --secondary-foreground: #0F172A;
+
+    /* Muted Elements */
+    --muted: #F1F5F9;
+    --muted-foreground: #64748B;
+
+    /* Interactive Brand Accent (Focus & Links) */
     --brand-accent: #2563EB;
     --brand-accent-subtle: #EFF6FF;
 
-    /* Decision & State Tokens (High-stakes recruitment semantics) */
+    /* Border & Divider Tokens */
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --rule: #F1F5F9;
+    --input: #E2E8F0;
+    --ring: #2563EB;
+
+    /* High-Stakes Decision & Recruitment Status Tokens */
+    /* Recommended Shortlist: Forest Emerald (Affirmative human review recommendation) */
     --state-shortlist-bg: #ECFDF5;
     --state-shortlist-text: #065F46;
     --state-shortlist-border: #A7F3D0;
 
+    /* Needs Review: Warm Amber (Uncertain, parser warning, knockout confirmation needed) */
     --state-review-bg: #FFFBEB;
     --state-review-text: #92400E;
     --state-review-border: #FDE68A;
 
-    --state-unshortlisted-bg: #F3F4F6;
-    --state-unshortlisted-text: #374151;
-    --state-unshortlisted-border: #E5E7EB;
+    /* Recommended Not Shortlisted: Cool Slate (Low match estimate, non-punitive, pending HR confirmation) */
+    --state-unshortlisted-bg: #F8FAFC;
+    --state-unshortlisted-text: #475569;
+    --state-unshortlisted-border: #E2E8F0;
 
-    --state-danger-bg: #FEF2F2;
-    --state-danger-text: #991B1B;
-    --state-danger-border: #FECACA;
+    /* Failed / Destructive / Integrity Alert */
+    --state-failed-bg: #FEF2F2;
+    --state-failed-text: #991B1B;
+    --state-failed-border: #FECACA;
+    --destructive: #DC2626;
+    --destructive-foreground: #FFFFFF;
 
     /* Parse Quality Badges */
     --parse-ok-bg: #F0FDF4;
@@ -64,34 +86,54 @@
     --parse-unreadable-text: #B91C1C;
     --parse-unreadable-border: #FECACA;
 
+    /* Chart Semantic Colors */
+    --chart-1: #2563EB;
+    --chart-2: #0D9488;
+    --chart-3: #F59E0B;
+    --chart-4: #64748B;
+    --chart-5: #6366F1;
+
     /* Geometry Tokens */
     --radius-sm: 4px;
     --radius-md: 6px;
     --radius-lg: 8px;
     --radius-full: 9999px;
+
+    /* Spacing Scale (4px base) */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+
+    /* Shadows (Flat / Subtle Achromatic Elevation) */
+    --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --shadow-soft: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+    --shadow-raised: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   }
 
   body {
-    background-color: var(--ground);
-    color: var(--text-primary);
-    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Accessible tabular nums for metrics, dates, percentages */
+  /* Accessible tabular numerals for scores, dates, metrics */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 
-  /* Monospace for candidate IDs, hashes, regex, tokens */
+  /* Monospace font for IDs, hashes, regexes, evidence tokens */
   .font-mono {
     font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
-  /* Clear, accessible keyboard focus rings */
+  /* Standard visible accessible keyboard focus ring */
   :focus-visible {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }

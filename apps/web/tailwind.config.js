@@ -7,16 +7,49 @@ export default {
   theme: {
     extend: {
       colors: {
-        ground: 'var(--ground)',
-        surface: {
-          DEFAULT: 'var(--surface)',
-          subtle: 'var(--surface-subtle)',
-          hover: 'var(--surface-hover)'
+        // Core shadcn semantic tokens
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        card: {
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)'
+        },
+        popover: {
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)'
+        },
+        primary: {
+          DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
+          foreground: 'var(--primary-foreground)'
+        },
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          hover: 'var(--secondary-hover)',
+          foreground: 'var(--secondary-foreground)'
+        },
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)'
+        },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)'
         },
         border: {
           DEFAULT: 'var(--border)',
           strong: 'var(--border-strong)',
           rule: 'var(--rule)'
+        },
+        input: 'var(--input)',
+        ring: 'var(--ring)',
+
+        // Achromatic ledger shorthands
+        ground: 'var(--background)',
+        surface: {
+          DEFAULT: 'var(--surface)',
+          subtle: 'var(--surface-subtle)',
+          hover: 'var(--surface-hover)'
         },
         ink: {
           primary: 'var(--text-primary)',
@@ -24,18 +57,11 @@ export default {
           muted: 'var(--text-muted)',
           subtle: 'var(--text-subtle)'
         },
-        // Backward-compatible slate mapping
         slate: {
           primary: 'var(--text-primary)',
           secondary: 'var(--text-secondary)',
           muted: 'var(--text-muted)',
           border: 'var(--border)'
-        },
-        // Primary brand action (Ink)
-        primary: {
-          DEFAULT: 'var(--primary)',
-          hover: 'var(--primary-hover)',
-          foreground: 'var(--primary-foreground)'
         },
         brand: {
           DEFAULT: 'var(--primary)',
@@ -44,7 +70,8 @@ export default {
           accent: 'var(--brand-accent)',
           accentSubtle: 'var(--brand-accent-subtle)'
         },
-        // Recruitment decision states
+
+        // High-stakes recruitment decision states
         decision: {
           shortlistBg: 'var(--state-shortlist-bg)',
           shortlistText: 'var(--state-shortlist-text)',
@@ -59,7 +86,14 @@ export default {
         state: {
           success: 'var(--state-shortlist-text)',
           warning: 'var(--state-review-text)',
-          danger: 'var(--state-danger-text)'
+          danger: 'var(--state-failed-text)'
+        },
+        chart: {
+          1: 'var(--chart-1)',
+          2: 'var(--chart-2)',
+          3: 'var(--chart-3)',
+          4: 'var(--chart-4)',
+          5: 'var(--chart-5)'
         }
       },
       borderRadius: {
@@ -70,13 +104,13 @@ export default {
         full: 'var(--radius-full)'
       },
       fontFamily: {
-        sans: ['Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['Geist Mono', 'ui-monospace', 'monospace']
       },
       boxShadow: {
-        subtle: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
-        soft: '0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04)',
-        raised: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)'
+        subtle: 'var(--shadow-subtle)',
+        soft: 'var(--shadow-soft)',
+        raised: 'var(--shadow-raised)'
       }
     },
   },
