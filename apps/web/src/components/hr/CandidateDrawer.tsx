@@ -13,12 +13,14 @@ import {
   UserCheck,
   UserX,
   Loader2,
-  Eye,
-  EyeOff,
   ShieldAlert,
-  HelpCircle,
-  Award
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+import { Button } from '../ui/Button.js';
+import { Badge } from '../ui/Badge.js';
+import { Switch } from '../ui/Switch.js';
 
 interface CandidateDrawerProps {
   batchId: string;
@@ -106,60 +108,54 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
   const integrityFlags: any[] = candidate.integrityFlags || breakdown.integrityFlags || [];
 
   const displayName = isBlindMode ? `Candidate #${candidate.id.slice(0, 6).toUpperCase()}` : candidate.fullName;
-  const displayEmail = isBlindMode ? '[Hidden in Blind Review]' : (candidate.email || 'No email on file');
-  const displayPhone = isBlindMode ? '[Hidden in Blind Review]' : candidate.phone;
+  const displayEmail = isBlindMode ? '[Protected Demographic]' : (candidate.email || 'No email on file');
+  const displayPhone = isBlindMode ? '[Protected Demographic]' : candidate.phone;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs flex justify-end">
-      <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/30 backdrop-blur-xs flex justify-end">
+      <div className="w-full max-w-2xl bg-surface h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
         {/* Drawer Header */}
-        <div className="p-5 border-b border-slate-border bg-slate-50 flex items-start justify-between">
+        <div className="p-4 border-b border-border bg-surface-subtle flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-primary">{displayName}</h2>
-              <span
-                className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                  candidate.decision === 'shortlisted'
-                    ? 'bg-emerald-100 text-state-success'
-                    : candidate.decision === 'needs_review'
-                    ? 'bg-amber-100 text-state-warning'
-                    : candidate.decision === 'unshortlisted'
-                    ? 'bg-slate-200 text-slate-600'
-                    : 'bg-slate-100 text-slate-400'
-                }`}
-              >
-                {candidate.decision || 'Pending'}
-              </span>
+              <h2 className="text-base font-bold text-ink-primary">{displayName}</h2>
+              {candidate.decision === 'shortlisted' && (
+                <Badge variant="shortlisted" size="sm">Shortlisted</Badge>
+              )}
+              {candidate.decision === 'needs_review' && (
+                <Badge variant="needs_review" size="sm">Needs Review</Badge>
+              )}
+              {candidate.decision === 'unshortlisted' && (
+                <Badge variant="unshortlisted" size="sm">Unshortlisted</Badge>
+              )}
+              {!candidate.decision && (
+                <Badge variant="neutral" size="sm">Pending</Badge>
+              )}
               {candidate.decisionSource === 'manual' && (
-                <span className="text-[10px] bg-indigo-100 text-brand-indigo px-1.5 py-0.5 rounded font-semibold">
+                <span className="text-[10px] bg-slate-200 text-ink-primary px-1.5 py-0.5 rounded font-semibold">
                   Manual Override
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-secondary mt-1">
+            <p className="text-xs text-ink-muted mt-0.5 font-mono">
               {displayEmail} {displayPhone && `• ${displayPhone}`}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Blind Review Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsBlindMode(!isBlindMode)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
-                isBlindMode
-                  ? 'bg-indigo-50 border-indigo-200 text-brand-indigo font-semibold'
-                  : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-100'
-              }`}
-              title="Toggle Blind Review Mode (masks name, contact details, and institutions)"
-            >
-              {isBlindMode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              {isBlindMode ? 'Blind Mode ON' : 'Blind Review'}
-            </button>
+            {/* Blind Review Mode Switch */}
+            <div className="flex items-center gap-2 px-2.5 py-1 bg-surface border border-border rounded">
+              <Switch
+                checked={isBlindMode}
+                onCheckedChange={setIsBlindMode}
+                label="Blind Mode"
+              />
+            </div>
 
             <button
               onClick={onClose}
-              className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
+              className="p-1 text-ink-muted hover:text-ink-primary rounded hover:bg-surface transition-colors"
+              aria-label="Close candidate drawer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -168,26 +164,26 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
 
         {/* Blind Review Active Notice */}
         {isBlindMode && (
-          <div className="px-5 py-2 bg-indigo-50/70 border-b border-indigo-100 flex items-center gap-2 text-[11px] text-brand-indigo">
-            <EyeOff className="w-3.5 h-3.5 shrink-0" />
-            <span>Blind Review Active: Candidate personal identity and institutions are masked to prevent demographic bias.</span>
+          <div className="px-4 py-2 bg-slate-100 border-b border-border flex items-center gap-2 text-[11px] text-ink-secondary">
+            <EyeOff className="w-3.5 h-3.5 shrink-0 text-ink-primary" />
+            <span>Blind Review Active: Candidate personal identity and institutions are masked to ensure evaluation on qualifications alone.</span>
           </div>
         )}
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-slate-border px-5 bg-white text-xs font-semibold">
+        <div className="flex border-b border-border px-4 bg-surface text-xs font-medium">
           {[
-            { id: 'evaluation', label: 'Evaluation & Criteria' },
+            { id: 'evaluation', label: 'Evaluation & Evidence' },
             { id: 'resume', label: 'PDF Resume' },
             { id: 'notes', label: 'HR Notes' }
           ].map(({ id, label }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id as any)}
-              className={`py-3 px-4 border-b-2 transition-colors ${
+              className={`py-3 px-3.5 border-b-2 transition-colors ${
                 activeTab === id
-                  ? 'border-brand-indigo text-brand-indigo font-bold'
-                  : 'border-transparent text-slate-secondary hover:text-slate-primary'
+                  ? 'border-primary text-ink-primary font-bold'
+                  : 'border-transparent text-ink-muted hover:text-ink-primary'
               }`}
             >
               {label}
@@ -196,25 +192,26 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
         </div>
 
         {/* Tab Content */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6 text-xs">
+        <div className="p-5 overflow-y-auto flex-1 space-y-5 text-xs">
           {activeTab === 'evaluation' && (
-            <div className="space-y-6">
-              {/* Parse Quality & Integrity Alerts */}
+            <div className="space-y-5">
+              {/* Parse Quality & Integrity Banner */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50 border-slate-200">
+                <div className="flex items-center justify-between p-3 rounded border bg-surface-subtle border-border">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    <Badge
+                      variant={
                         parseQuality.status === 'OK'
-                          ? 'bg-emerald-100 text-state-success'
+                          ? 'parse_ok'
                           : parseQuality.status === 'PARTIAL'
-                          ? 'bg-amber-100 text-state-warning'
-                          : 'bg-red-100 text-state-danger'
-                      }`}
+                          ? 'parse_partial'
+                          : 'parse_unreadable'
+                      }
+                      size="sm"
                     >
                       Parse Quality: {parseQuality.status}
-                    </span>
-                    <span className="text-slate-600 text-[11px]">
+                    </Badge>
+                    <span className="text-ink-secondary text-[11px]">
                       {parseQuality.status === 'OK'
                         ? 'Clean text extraction (100% extractable)'
                         : parseQuality.status === 'PARTIAL'
@@ -223,76 +220,76 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                     </span>
                   </div>
                   {parseQuality.issues && parseQuality.issues.length > 0 && (
-                    <span className="text-[10px] text-amber-700 font-medium">
+                    <span className="text-[10px] text-amber-800 font-medium font-mono">
                       {parseQuality.issues.join(', ')}
                     </span>
                   )}
                 </div>
 
-                {/* Integrity Alerts Banner (Keyword stuffing, hidden text, prompt injection) */}
+                {/* Integrity Alerts Banner */}
                 {integrityFlags.length > 0 && (
-                  <div className="p-3 bg-red-50/70 border border-red-200 rounded-lg flex items-start gap-2.5 text-xs text-red-900">
+                  <div className="p-3 bg-red-50 border border-red-200 rounded flex items-start gap-2.5 text-xs text-red-900">
                     <ShieldAlert className="w-4 h-4 text-state-danger shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold block">Resume Integrity Advisory</span>
+                      <span className="font-semibold block">Resume Integrity Notice</span>
                       <p className="text-[11px] text-red-800 mt-0.5">
-                        Potential prompt manipulation or keyword stuffing detected. Engine automatically sanitized adversarial text before evaluation. Review original document before final decision.
+                        Adversarial text or keyword stuffing was flagged. Engine sanitized prompt manipulation before scoring.
                       </p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Score Ring & Breakdown Grid */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col sm:flex-row items-center gap-6">
+              {/* Score & Component Breakdown */}
+              <div className="p-4 bg-surface-subtle border border-border rounded flex flex-col sm:flex-row items-center gap-5">
                 {/* Score Circle */}
                 <div className="flex flex-col items-center justify-center shrink-0">
-                  <div className="relative w-20 h-20 flex items-center justify-center">
-                    <svg className="w-20 h-20 -rotate-90">
+                  <div className="relative w-18 h-18 flex items-center justify-center">
+                    <svg className="w-18 h-18 -rotate-90">
                       <circle
-                        cx="40"
-                        cy="40"
-                        r="34"
+                        cx="36"
+                        cy="36"
+                        r="30"
                         stroke="#e2e8f0"
-                        strokeWidth="7"
+                        strokeWidth="6"
                         fill="none"
                       />
                       <circle
-                        cx="40"
-                        cy="40"
-                        r="34"
+                        cx="36"
+                        cy="36"
+                        r="30"
                         stroke={score >= 70 ? '#15803D' : score >= 65 ? '#B45309' : '#475569'}
-                        strokeWidth="7"
-                        strokeDasharray={213}
-                        strokeDashoffset={213 - (213 * score) / 100}
+                        strokeWidth="6"
+                        strokeDasharray={188}
+                        strokeDashoffset={188 - (188 * score) / 100}
                         strokeLinecap="round"
                         fill="none"
                       />
                     </svg>
-                    <span className="absolute text-xl font-bold text-slate-primary">{score}%</span>
+                    <span className="absolute text-lg font-bold text-ink-primary tabular-nums">{score}%</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-semibold uppercase mt-1">
-                    ATS Score
+                  <span className="text-[10px] text-ink-muted font-medium uppercase mt-1">
+                    Match Estimate
                   </span>
                 </div>
 
                 {/* 5 Component Breakdown Bars */}
-                <div className="flex-1 w-full space-y-2">
+                <div className="flex-1 w-full space-y-1.5">
                   {[
                     { label: 'Keywords Match', val: breakdown.keywordScore ?? score },
                     { label: 'Technical Skills', val: breakdown.skillsScore ?? score },
                     { label: 'Experience Relevance', val: breakdown.experienceScore ?? score },
-                    { label: 'Resume Formatting', val: breakdown.formattingScore ?? 85 },
+                    { label: 'Formatting Health', val: breakdown.formattingScore ?? 85 },
                     { label: 'Readability', val: breakdown.readabilityScore ?? 90 }
                   ].map(({ label, val }) => (
                     <div key={label} className="space-y-0.5">
                       <div className="flex justify-between text-[11px]">
-                        <span className="text-slate-secondary">{label}</span>
-                        <span className="font-semibold text-slate-primary">{val}%</span>
+                        <span className="text-ink-secondary">{label}</span>
+                        <span className="font-semibold text-ink-primary tabular-nums">{val}%</span>
                       </div>
-                      <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
                         <div
-                          className="bg-brand-indigo h-full rounded-full"
+                          className="bg-primary h-full rounded-full"
                           style={{ width: `${val}%` }}
                         />
                       </div>
@@ -303,15 +300,15 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
 
               {/* AI Strengths & Gaps Summary */}
               {candidate.aiSummary && (
-                <div className="p-4 bg-indigo-50/60 border border-indigo-200 rounded-lg space-y-2">
-                  <div className="font-semibold text-slate-primary flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-brand-indigo" />
-                    AI Strengths & Gaps Analysis
+                <div className="p-3.5 bg-surface border border-border rounded space-y-2">
+                  <div className="font-semibold text-ink-primary flex items-center gap-1.5 text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    AI Evaluation Summary & Analysis
                   </div>
-                  <div className="text-xs text-slate-700 space-y-1.5 leading-relaxed font-sans">
+                  <div className="text-xs text-ink-secondary space-y-1 leading-relaxed">
                     {candidate.aiSummary.split('\n').map((line: string, i: number) => (
                       <p key={i} className="flex items-start gap-1.5">
-                        <span className="text-brand-indigo font-bold">•</span>
+                        <span className="text-primary font-bold">•</span>
                         <span>{line.replace(/^([•\-*]|\d+\.)\s*/, '')}</span>
                       </p>
                     ))}
@@ -322,26 +319,26 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
               {/* Criteria Checklist with Evidence Snippets & Tiers */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-primary">
+                  <h3 className="font-semibold text-ink-primary">
                     Criteria Checklist & Verbatim Evidence ({criteriaResults.length})
                   </h3>
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-ink-muted">
                     Tiered by evidence strength
                   </span>
                 </div>
 
                 {criteriaResults.length === 0 ? (
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded text-slate-400 text-center">
+                  <div className="p-4 bg-surface-subtle border border-border rounded text-ink-muted text-center">
                     No custom criteria evaluated yet.
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {criteriaResults.map((cr, idx) => {
                       const tier = cr.evidenceTier || (cr.passed ? 'job_context' : 'unmatched');
                       return (
                         <div
                           key={cr.criterionId || idx}
-                          className={`p-3 rounded-lg border text-xs space-y-2 ${
+                          className={`p-3 rounded border text-xs space-y-2 ${
                             cr.passed
                               ? 'bg-emerald-50/40 border-emerald-200'
                               : 'bg-red-50/40 border-red-200'
@@ -350,15 +347,15 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-start gap-2">
                               {cr.passed ? (
-                                <CheckCircle2 className="w-4 h-4 text-state-success shrink-0 mt-0.5" />
+                                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                               ) : (
-                                <XCircle className="w-4 h-4 text-state-danger shrink-0 mt-0.5" />
+                                <XCircle className="w-4 h-4 text-red-700 shrink-0 mt-0.5" />
                               )}
                               <div>
-                                <span className="font-semibold text-slate-primary block">
+                                <span className="font-semibold text-ink-primary block">
                                   {cr.label}
                                 </span>
-                                <span className="text-[11px] text-slate-secondary">
+                                <span className="text-[11px] text-ink-secondary">
                                   {cr.reason}
                                 </span>
                               </div>
@@ -367,17 +364,17 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                             <div className="flex items-center gap-1.5 shrink-0">
                               {/* Evidence Tier Badge */}
                               {cr.passed && (
-                                <span
-                                  className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                <Badge
+                                  variant={
                                     tier === 'outcome_backed'
-                                      ? 'bg-emerald-100 text-emerald-800'
+                                      ? 'tier_outcome'
                                       : tier === 'job_context'
-                                      ? 'bg-blue-100 text-blue-800'
+                                      ? 'tier_job'
                                       : tier === 'related_semantic'
-                                      ? 'bg-purple-100 text-purple-800'
-                                      : 'bg-slate-100 text-slate-700'
-                                  }`}
-                                  title={`Evidence tier: ${tier}`}
+                                      ? 'tier_related'
+                                      : 'tier_listed'
+                                  }
+                                  size="sm"
                                 >
                                   {tier === 'outcome_backed'
                                     ? 'Outcome Backed'
@@ -386,26 +383,27 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                                     : tier === 'related_semantic'
                                     ? 'Related'
                                     : 'Listed Only'}
-                                </span>
+                                </Badge>
                               )}
 
-                              <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                              <Badge
+                                variant={
                                   cr.type === 'dealbreaker'
-                                    ? 'bg-red-100 text-state-danger'
+                                    ? 'dealbreaker'
                                     : cr.type === 'must-have' || cr.type === 'must_have'
-                                    ? 'bg-indigo-100 text-brand-indigo'
-                                    : 'bg-slate-100 text-slate-600'
-                                }`}
+                                    ? 'must_have'
+                                    : 'nice_to_have'
+                                }
+                                size="sm"
                               >
                                 {cr.type}
-                              </span>
+                              </Badge>
                             </div>
                           </div>
 
                           {/* Evidence Snippet */}
                           {cr.evidenceSnippet && (
-                            <div className="pl-3 py-1 text-[11px] text-slate-700 border-l-2 border-slate-300 ml-2 italic bg-white/70 rounded-r">
+                            <div className="pl-3 py-1 text-[11px] text-ink-primary border-l-2 border-border ml-2 italic bg-surface/80 rounded-r font-mono">
                               "{cr.evidenceSnippet}"
                             </div>
                           )}
@@ -420,9 +418,9 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
 
           {/* Resume PDF Tab */}
           {activeTab === 'resume' && (
-            <div className="space-y-4 h-full flex flex-col">
+            <div className="space-y-3 h-full flex flex-col">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-primary">
+                <span className="font-semibold text-ink-primary">
                   Original Text-Based Resume
                 </span>
                 {signedPdfUrl && (
@@ -430,7 +428,7 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                     href={signedPdfUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-brand-indigo hover:underline font-semibold"
+                    className="inline-flex items-center gap-1 text-xs text-brand-accent hover:underline font-semibold"
                   >
                     Open in New Window
                     <ExternalLink className="w-3 h-3" />
@@ -439,18 +437,18 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
               </div>
 
               {isLoadingPdf ? (
-                <div className="p-12 text-center text-slate-400">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-indigo" />
+                <div className="p-12 text-center text-ink-muted">
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" />
                   Generating secure signed preview URL...
                 </div>
               ) : signedPdfUrl ? (
                 <iframe
                   src={signedPdfUrl}
                   title="Candidate Resume"
-                  className="w-full h-[550px] border border-slate-200 rounded-lg shadow-inner"
+                  className="w-full h-[550px] border border-border rounded shadow-inner"
                 />
               ) : (
-                <div className="p-8 text-center border border-dashed border-slate-300 rounded text-slate-400">
+                <div className="p-8 text-center border border-dashed border-border rounded text-ink-muted">
                   No preview available.
                 </div>
               )}
@@ -461,7 +459,7 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
           {activeTab === 'notes' && (
             <div className="space-y-4">
               <div>
-                <label className="font-semibold text-slate-primary block mb-1">
+                <label className="font-semibold text-ink-primary block mb-1">
                   Internal Candidate Notes
                 </label>
                 <textarea
@@ -469,31 +467,31 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                   placeholder="Type interview notes, assessment observations, or referral notes here..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full text-xs p-3 border border-slate-300 rounded focus:border-brand-indigo focus:outline-none leading-relaxed"
+                  className="w-full text-xs p-3 border border-border rounded focus:border-primary focus:outline-none leading-relaxed bg-surface"
                 />
               </div>
 
               <div className="flex justify-end">
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
+                  isLoading={isSavingNotes}
+                  leftIcon={<Save className="w-3.5 h-3.5" />}
                   onClick={handleSaveNotes}
-                  disabled={isSavingNotes}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded text-white bg-brand-indigo hover:bg-brand-hover disabled:opacity-50 transition-colors shadow-sm"
                 >
-                  {isSavingNotes ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                   Save Notes
-                </button>
+                </Button>
               </div>
             </div>
           )}
         </div>
 
         {/* Drawer Action Footer */}
-        <div className="p-4 border-t border-slate-border bg-slate-50 flex items-center justify-between">
-          <div className="text-[11px] text-slate-500">
+        <div className="p-4 border-t border-border bg-surface-subtle flex items-center justify-between">
+          <div className="text-[11px] text-ink-muted">
             {isBatchFinalized
-              ? 'Batch is finalized. Candidate decisions are permanently locked.'
-              : 'Manual overrides are logged to organization audit trail.'}
+              ? 'Batch is finalized. Candidate decisions are locked.'
+              : 'Overrides are logged to the organization audit trail.'}
           </div>
 
           <div className="flex items-center gap-2">
@@ -503,35 +501,35 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
               </span>
             ) : (
               <>
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isUpdatingDecision}
+                  leftIcon={<UserX className="w-3.5 h-3.5 text-state-danger" />}
                   onClick={() => handleDecision('unshortlisted')}
-                  disabled={isUpdatingDecision}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 disabled:opacity-50 transition-colors shadow-xs"
                 >
-                  <UserX className="w-3.5 h-3.5 text-state-danger" />
                   Unshortlist
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isUpdatingDecision}
+                  leftIcon={<AlertTriangle className="w-3.5 h-3.5 text-amber-600" />}
                   onClick={() => handleDecision('needs_review')}
-                  disabled={isUpdatingDecision}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-amber-800 bg-amber-50 border border-amber-300 hover:bg-amber-100 disabled:opacity-50 transition-colors shadow-xs"
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                   Needs Review
-                </button>
+                </Button>
 
-                <button
-                  type="button"
-                  onClick={() => handleDecision('shortlisted')}
+                <Button
+                  variant="success"
+                  size="sm"
                   disabled={isUpdatingDecision}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded text-white bg-state-success hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
+                  leftIcon={<UserCheck className="w-3.5 h-3.5" />}
+                  onClick={() => handleDecision('shortlisted')}
                 >
-                  <UserCheck className="w-3.5 h-3.5" />
                   Shortlist Candidate
-                </button>
+                </Button>
               </>
             )}
           </div>
@@ -540,4 +538,3 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
     </div>
   );
 };
-
