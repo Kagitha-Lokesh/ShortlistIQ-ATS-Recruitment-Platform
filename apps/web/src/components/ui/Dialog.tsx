@@ -28,6 +28,7 @@ export const Dialog: React.FC<DialogProps> = ({
   const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const previousActiveElement = document.activeElement as HTMLElement | null;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
@@ -36,10 +37,14 @@ export const Dialog: React.FC<DialogProps> = ({
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
+      setTimeout(() => {
+        surfaceRef.current?.focus();
+      }, 50);
     }
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
+      previousActiveElement?.focus();
     };
   }, [isOpen, onClose]);
 
@@ -89,6 +94,8 @@ export const Dialog: React.FC<DialogProps> = ({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="dialog-title"
+      aria-describedby={description ? 'dialog-description' : undefined}
     >
       {/* Backdrop */}
       <div
@@ -101,14 +108,15 @@ export const Dialog: React.FC<DialogProps> = ({
       {/* Dialog Surface */}
       <div
         ref={surfaceRef}
-        className={`relative w-full ${widthStyles[maxWidth]} bg-surface border border-border rounded-lg shadow-raised text-ink-primary overflow-hidden flex flex-col z-10`}
+        tabIndex={-1}
+        className={`relative w-full ${widthStyles[maxWidth]} bg-surface border border-border rounded-lg shadow-raised text-ink-primary overflow-hidden flex flex-col z-10 focus:outline-none`}
       >
         {/* Header */}
         <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold tracking-tight text-ink-primary">{title}</h2>
+            <h2 id="dialog-title" className="text-sm font-semibold tracking-tight text-ink-primary">{title}</h2>
             {description && (
-              <p className="text-xs text-ink-secondary mt-0.5">{description}</p>
+              <p id="dialog-description" className="text-xs text-ink-secondary mt-0.5">{description}</p>
             )}
           </div>
           <button

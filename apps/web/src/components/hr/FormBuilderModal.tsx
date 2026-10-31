@@ -38,6 +38,7 @@ import {
   Type,
   AlignLeft,
   ChevronDown,
+  ChevronUp,
   Calendar,
   Hash,
   ToggleLeft,
@@ -60,12 +61,16 @@ interface FormBuilderModalProps {
   onFormSaved: () => void;
 }
 
-// Sortable item wrapper for draggable custom fields
+// Sortable item wrapper for draggable custom fields with keyboard accessible move buttons
 const SortableFieldItem: React.FC<{
   field: FormField;
+  index: number;
+  totalFields: number;
   onDelete: (id: string) => void;
   onEdit: (field: FormField) => void;
-}> = ({ field, onDelete, onEdit }) => {
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
+}> = ({ field, index, totalFields, onDelete, onEdit, onMoveUp, onMoveDown }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: field.id
   });
@@ -105,10 +110,12 @@ const SortableFieldItem: React.FC<{
     >
       <div className="flex items-center gap-3">
         <button
+          type="button"
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-1 text-ink-muted hover:text-ink-primary transition-colors"
           title="Drag to reorder"
+          aria-label={`Drag to reorder ${field.label}`}
         >
           <GripVertical className="w-4 h-4" />
         </button>
@@ -139,16 +146,41 @@ const SortableFieldItem: React.FC<{
       </div>
 
       <div className="flex items-center gap-1">
+        {/* Keyboard-accessible order buttons */}
         <button
+          type="button"
+          onClick={() => onMoveUp(index)}
+          disabled={index === 0}
+          aria-label={`Move question "${field.label}" up`}
+          className="p-1 text-ink-muted hover:text-ink-primary disabled:opacity-25 disabled:pointer-events-none rounded-md transition-colors"
+          title="Move up"
+        >
+          <ChevronUp className="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onMoveDown(index)}
+          disabled={index === totalFields - 1}
+          aria-label={`Move question "${field.label}" down`}
+          className="p-1 text-ink-muted hover:text-ink-primary disabled:opacity-25 disabled:pointer-events-none rounded-md transition-colors"
+          title="Move down"
+        >
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
           onClick={() => onEdit(field)}
-          className="px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors"
+          className="px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors ml-1"
         >
           Edit
         </button>
         <button
+          type="button"
           onClick={() => onDelete(field.id)}
           className="p-1 text-ink-muted hover:text-status-danger-text rounded-md transition-colors"
           title="Remove field"
+          aria-label={`Remove field ${field.label}`}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -323,6 +355,12 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
   const handleDeleteField = (id: string) => {
     setCustomFields((prev) => prev.filter((f) => f.id !== id));
     setKnockoutRules((prev) => prev.filter((r) => r.fieldId !== id));
+  };
+
+  const handleMoveField = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= customFields.length) return;
+    setCustomFields((prev) => arrayMove(prev, index, targetIndex));
   };
 
   const handleAddKnockoutRule = () => {
@@ -537,12 +575,16 @@ export const FormBuilderModal: React.FC<FormBuilderModalProps> = ({
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={customFields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
                       <div className="space-y-2.5">
-                        {customFields.map((field) => (
+                        {customFields.map((field, idx) => (
                           <SortableFieldItem
                             key={field.id}
                             field={field}
+                            index={idx}
+                            totalFields={customFields.length}
                             onDelete={handleDeleteField}
                             onEdit={handleOpenEditField}
+                            onMoveUp={(i) => handleMoveField(i, 'up')}
+                            onMoveDown={(i) => handleMoveField(i, 'down')}
                           />
                         ))}
                       </div>

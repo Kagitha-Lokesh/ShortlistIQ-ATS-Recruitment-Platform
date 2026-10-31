@@ -134,7 +134,6 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
           }}
           tabIndex={0}
           role="button"
-          aria-label={`${title}. ${description}`}
           className={`rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-all select-none focus-visible:outline-2 focus-visible:outline-offset-2 ${
             isDragging
               ? 'border-primary bg-surface-subtle'
@@ -146,7 +145,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
           </div>
           <h4 className="text-xs font-semibold text-ink-primary">{title}</h4>
           <p className="text-[11px] text-ink-secondary mt-1">{description}</p>
-          <span className="inline-block mt-3 px-2 py-0.5 text-[10px] font-medium text-ink-muted bg-surface-subtle rounded border border-border">
+          <span className="inline-block mt-3 px-2 py-0.5 text-[10px] font-medium text-ink-secondary bg-surface-subtle rounded border border-border">
             PDF, DOCX up to 10MB
           </span>
         </div>

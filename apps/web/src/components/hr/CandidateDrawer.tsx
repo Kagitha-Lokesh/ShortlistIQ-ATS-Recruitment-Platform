@@ -24,7 +24,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Button } from '../ui/Button.js';
-import { Badge } from '../ui/Badge.js';
+import { Badge, DecisionStatusBadge, ParseQualityBadge } from '../ui/Badge.js';
 import { useToast } from '../../context/ToastContext.js';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -72,6 +72,24 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
   const [overrideCriterion, setOverrideCriterion] = useState<any | null>(null);
   const [overrideNote, setOverrideNote] = useState('');
   const [overrideStatus, setOverrideStatus] = useState<'passed' | 'failed'>('passed');
+
+  useEffect(() => {
+    const previousActiveElement = document.activeElement as HTMLElement | null;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+      previousActiveElement?.focus();
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (candidate) {
@@ -233,28 +251,26 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
   const displayPhone = isBlindMode ? '[Protected Demographic]' : candidate.phone;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/40 backdrop-blur-xs flex justify-end">
-      <div ref={containerRef} className="w-full max-w-2xl bg-surface h-full shadow-2xl flex flex-col">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="candidate-drawer-title"
+      className="fixed inset-0 z-50 overflow-hidden bg-slate-950/40 backdrop-blur-xs flex justify-end"
+    >
+      <div ref={containerRef} className="w-full max-w-2xl bg-surface h-full shadow-2xl flex flex-col focus:outline-none" tabIndex={-1}>
         {/* Drawer Header */}
         <div className="p-4 sm:p-5 border-b border-border bg-surface-subtle flex items-start justify-between">
           <div className="min-w-0 flex-1 pr-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-bold text-ink-primary truncate">{displayName}</h2>
-              {candidate.decision === 'shortlisted' && (
-                <Badge variant="shortlisted" size="sm">Shortlisted</Badge>
-              )}
-              {candidate.decision === 'needs_review' && (
-                <Badge variant="needs_review" size="sm">Needs Review</Badge>
-              )}
-              {candidate.decision === 'unshortlisted' && (
-                <Badge variant="unshortlisted" size="sm">Unshortlisted</Badge>
-              )}
-              {!candidate.decision && (
-                <Badge variant="neutral" size="sm">Pending</Badge>
+              <h2 id="candidate-drawer-title" className="text-base font-bold text-ink-primary truncate">{displayName}</h2>
+              {candidate.decision ? (
+                <DecisionStatusBadge decision={candidate.decision} size="sm" />
+              ) : (
+                <Badge variant="neutral" size="sm">Pending Review</Badge>
               )}
               {candidate.decisionSource === 'manual' && (
                 <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded font-semibold">
-                  Manual Override
+                  Manual Recruiter Override
                 </span>
               )}
             </div>

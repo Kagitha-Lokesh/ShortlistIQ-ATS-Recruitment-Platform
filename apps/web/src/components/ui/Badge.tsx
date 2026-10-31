@@ -109,7 +109,7 @@ export const DecisionStatusBadge: React.FC<DecisionStatusBadgeProps> = ({
     return (
       <Badge variant="failed" size={size} className={className}>
         <XCircle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
-        <span>Knockout Flagged</span>
+        <span>Knockout Flag (Needs Review)</span>
       </Badge>
     );
   }
@@ -117,7 +117,7 @@ export const DecisionStatusBadge: React.FC<DecisionStatusBadgeProps> = ({
   return (
     <Badge variant="unshortlisted" size={size} className={className}>
       <MinusCircle className={size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'} aria-hidden="true" />
-      <span>Not Shortlisted</span>
+      <span>Recommended Not Shortlisted</span>
     </Badge>
   );
 };

@@ -28,6 +28,7 @@ export const Drawer: React.FC<DrawerProps> = ({
   const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const previousActiveElement = document.activeElement as HTMLElement | null;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
@@ -36,10 +37,14 @@ export const Drawer: React.FC<DrawerProps> = ({
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
+      setTimeout(() => {
+        panelRef.current?.focus();
+      }, 50);
     }
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
+      previousActiveElement?.focus();
     };
   }, [isOpen, onClose]);
 
@@ -88,6 +93,7 @@ export const Drawer: React.FC<DrawerProps> = ({
       className="fixed inset-0 z-50 overflow-hidden"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="drawer-title"
     >
       {/* Backdrop */}
       <div
@@ -100,15 +106,16 @@ export const Drawer: React.FC<DrawerProps> = ({
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         <div
           ref={panelRef}
-          className={`w-screen ${widthStyles[size]} bg-surface border-l border-border shadow-raised flex flex-col`}
+          tabIndex={-1}
+          className={`w-screen ${widthStyles[size]} bg-surface border-l border-border shadow-raised flex flex-col focus:outline-none`}
         >
           {/* Header */}
           <div className="p-4 sm:p-5 border-b border-border flex items-start justify-between gap-4 bg-surface sticky top-0 z-10">
             <div className="min-w-0 flex-1">
               {typeof title === 'string' ? (
-                <h2 className="text-sm font-semibold tracking-tight text-ink-primary truncate">{title}</h2>
+                <h2 id="drawer-title" className="text-sm font-semibold tracking-tight text-ink-primary truncate">{title}</h2>
               ) : (
-                title
+                <div id="drawer-title">{title}</div>
               )}
               {subtitle && (
                 <div className="mt-1 text-xs text-ink-secondary">{subtitle}</div>
