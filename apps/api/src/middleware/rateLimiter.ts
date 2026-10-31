@@ -48,8 +48,8 @@ export function createRateLimiter(options: RateLimiterOptions = {}) {
 export const candidateCheckRateLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
   max: (req: Request) => {
-    if (process.env.NODE_ENV === 'test') {
-      return 1000; // Relaxed in test suite
+    if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+      return 1000; // Relaxed in test suite and local development
     }
     const user = (req as Request & { user?: { id: string } }).user;
     return user && user.id ? 10 : 3;

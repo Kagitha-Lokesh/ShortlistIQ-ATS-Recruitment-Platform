@@ -126,6 +126,7 @@ export const CheckerPage: React.FC = () => {
       const stepTimer2 = setTimeout(() => setAnalysisStep(3), 1500);
 
       const formData = new FormData();
+      formData.append('file', file);
       formData.append('resume', file);
       formData.append('jdText', jdText.trim());
       if (jobTitle.trim()) formData.append('jobTitle', jobTitle.trim());

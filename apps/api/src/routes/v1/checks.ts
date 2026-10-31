@@ -89,12 +89,12 @@ async function getAuthorizedCheck(req: Request, checkId: string) {
 checksRouter.post(
   '/',
   candidateCheckRateLimiter,
-  upload.single('file'),
+  upload.any(),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       await verifyTurnstile(req.body.turnstileToken || req.body['cf-turnstile-response'], req.ip);
 
-      const file = req.file;
+      const file = req.file || (req.files && Array.isArray(req.files) ? req.files[0] : (req.files as any)?.file?.[0] || (req.files as any)?.resume?.[0]);
       if (!file) {
         throw new AppError(400, 'MISSING_FILE', 'A PDF resume file is required.');
       }
