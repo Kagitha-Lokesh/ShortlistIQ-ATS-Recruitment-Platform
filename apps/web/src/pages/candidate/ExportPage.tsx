@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   FileText,
   Download,
@@ -16,11 +16,18 @@ import {
   Loader2,
   Plus,
   Trash2,
-  Check
+  Check,
+  Code2,
+  Copy,
+  FileCode,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
 import { ResumeData, TemplateThemeOptions } from '@shortlistiq/shared';
 import { checksApi, CandidateCheckData } from '../../lib/api';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
 import { useToast } from '../../context/ToastContext';
 import { getAtsCheck, updateAtsCheck } from '../../lib/atsStorage';
 
@@ -48,8 +55,20 @@ export const ExportPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
-  const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'preview' | 'latex' | 'edit'>(
+    tabParam === 'latex' ? 'latex' : tabParam === 'edit' ? 'edit' : 'preview'
+  );
   const [latexSource, setLatexSource] = useState<string>('');
+  const [isCopied, setIsCopied] = useState(false);
+  const [isRefreshingLatex, setIsRefreshingLatex] = useState(false);
+
+  useEffect(() => {
+    if (tabParam === 'latex' || tabParam === 'edit' || tabParam === 'preview') {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   // Verification state
   const [verification, setVerification] = useState<{
@@ -160,6 +179,54 @@ export const ExportPage: React.FC = () => {
       addToast('error', err instanceof Error ? err.message : 'Failed to download DOCX.');
     } finally {
       setIsExportingDocx(false);
+    }
+  };
+
+  const handleCopyLatex = async () => {
+    if (!latexSource) {
+      addToast('info', 'LaTeX code is generating...');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(latexSource);
+      setIsCopied(true);
+      addToast('success', 'LaTeX source copied to clipboard!');
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      addToast('error', 'Failed to copy LaTeX to clipboard');
+    }
+  };
+
+  const handleDownloadTex = () => {
+    if (!latexSource) {
+      addToast('error', 'LaTeX source not available yet');
+      return;
+    }
+    const blob = new Blob([latexSource], { type: 'application/x-tex;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(resumeData?.contact?.fullName || 'Candidate').replace(/[^a-zA-Z0-9]/g, '_')}_Resume.tex`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addToast('success', 'Downloaded .tex file');
+  };
+
+  const handleRefreshLatex = async () => {
+    if (!id || !resumeData) return;
+    try {
+      setIsRefreshingLatex(true);
+      addToast('info', 'Re-syncing LaTeX source from resume content...');
+      const res = await checksApi.getLatexSource(id, { resumeData, options });
+      setLatexSource(res.data.latexSource);
+      updateAtsCheck(id, { latexSource: res.data.latexSource });
+      addToast('success', 'LaTeX source updated!');
+    } catch (err: any) {
+      addToast('error', err.message || 'Failed to refresh LaTeX source');
+    } finally {
+      setIsRefreshingLatex(false);
     }
   };
 
@@ -292,13 +359,16 @@ export const ExportPage: React.FC = () => {
         </div>
       )}
 
-      {/* Mode Navigation Tabs: Focused on Preview & Editing */}
-      <div className="flex gap-2 border-b border-border">
+      {/* Mode Navigation Tabs: Live A4 Preview, LaTeX Code & Compiler, and Content Editor */}
+      <div className="flex flex-wrap gap-2 border-b border-border">
         <button
-          onClick={() => setActiveTab('preview')}
+          onClick={() => {
+            setActiveTab('preview');
+            setSearchParams({ tab: 'preview' }, { replace: true });
+          }}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
             activeTab === 'preview'
-              ? 'border-primary text-primary'
+              ? 'border-primary text-primary font-bold'
               : 'border-transparent text-ink-secondary hover:text-ink-primary'
           }`}
         >
@@ -306,10 +376,36 @@ export const ExportPage: React.FC = () => {
           Templates & Live A4 Preview
         </button>
         <button
-          onClick={() => setActiveTab('edit')}
+          onClick={() => {
+            setActiveTab('latex');
+            setSearchParams({ tab: 'latex' }, { replace: true });
+            if (!latexSource && id && resumeData) {
+              checksApi
+                .getLatexSource(id, { resumeData, options })
+                .then((res) => setLatexSource(res.data.latexSource))
+                .catch(() => {});
+            }
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+            activeTab === 'latex'
+              ? 'border-primary text-primary font-bold'
+              : 'border-transparent text-ink-secondary hover:text-ink-primary'
+          }`}
+        >
+          <Code2 className="w-4 h-4" />
+          <span>LaTeX Source & Compiler</span>
+          <span className="px-1.5 py-0.2 text-[10px] font-mono rounded bg-primary/10 text-primary font-bold">
+            Pure TeX
+          </span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('edit');
+            setSearchParams({ tab: 'edit' }, { replace: true });
+          }}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
             activeTab === 'edit'
-              ? 'border-primary text-primary'
+              ? 'border-primary text-primary font-bold'
               : 'border-transparent text-ink-secondary hover:text-ink-primary'
           }`}
         >
@@ -559,7 +655,146 @@ export const ExportPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: Editable Review Form */}
+      {/* TAB 2: LaTeX Source Code & Compiler */}
+      {activeTab === 'latex' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main LaTeX Code Editor (8 cols) */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="bg-surface border border-border rounded-lg shadow-xs overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 bg-surface-muted border-b border-border gap-3">
+                <div className="flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-primary" />
+                  <span className="font-mono text-xs font-bold text-ink-primary">resume.tex</span>
+                  <Badge variant="outline" size="sm" className="font-mono text-[10px]">
+                    TeX Live UTF-8
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isRefreshingLatex ? 'animate-spin' : ''}`} />}
+                    onClick={handleRefreshLatex}
+                    disabled={isRefreshingLatex}
+                    title="Re-generate LaTeX code from the current resume content"
+                  >
+                    Sync Content
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Copy className="w-3.5 h-3.5" />}
+                    onClick={handleCopyLatex}
+                    title="Copy full LaTeX code to clipboard"
+                  >
+                    {isCopied ? 'Copied!' : 'Copy Code'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Download className="w-3.5 h-3.5" />}
+                    onClick={handleDownloadTex}
+                    title="Download raw .tex file"
+                  >
+                    .tex File
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-4 bg-surface">
+                {latexSource ? (
+                  <textarea
+                    value={latexSource}
+                    onChange={(e) => setLatexSource(e.target.value)}
+                    rows={26}
+                    spellCheck={false}
+                    className="w-full font-mono text-xs leading-relaxed text-ink-primary bg-surface-muted/50 border border-border rounded-md p-4 focus:outline-none focus:ring-1 focus:ring-primary resize-y font-normal"
+                    placeholder="% LaTeX source code will render here..."
+                  />
+                ) : (
+                  <div className="py-20 text-center space-y-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                    <p className="text-xs text-ink-secondary">Compiling LaTeX representation from resume data...</p>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] text-ink-muted pt-3 border-t border-border mt-3 gap-2">
+                  <span>
+                    Lines: <strong className="text-ink-secondary">{latexSource ? latexSource.split('\n').length : 0}</strong> &nbsp;|&nbsp;
+                    Characters: <strong className="text-ink-secondary">{latexSource?.length || 0}</strong>
+                  </span>
+                  <span className="font-mono text-[10px]">Standard Article Class • Geometry (0.75in) • Enumitem</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* LaTeX Compilation & Export Controls (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Quick Compile Action */}
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-ink-primary flex items-center gap-2">
+                  <Code2 className="w-4 h-4 text-primary" />
+                  Compile & Download PDF
+                </h3>
+                <p className="text-xs text-ink-secondary mt-1">
+                  Server-side LaTeX engine compiles this exact code into a publication-quality binary PDF.
+                </p>
+              </div>
+
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full"
+                leftIcon={isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                onClick={handleDownloadPdf}
+                disabled={isExportingPdf}
+              >
+                {isExportingPdf ? 'Compiling PDF...' : 'Compile LaTeX to PDF'}
+              </Button>
+
+              <div className="text-[11px] text-ink-muted bg-surface-muted p-3 rounded-md space-y-1">
+                <p className="font-semibold text-ink-primary">Why use LaTeX for ATS resumes?</p>
+                <p>
+                  LaTeX compiles to pure vector text streams with predictable character coordinates. ATS parsers extract 100% of keywords with zero layout distortion.
+                </p>
+              </div>
+            </div>
+
+            {/* Overleaf & External TeX Usage */}
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-ink-muted">External Compilers</h4>
+              <p className="text-xs text-ink-secondary">
+                You can copy this document directly into Overleaf, TeXShop, or compile locally with command-line tools:
+              </p>
+              <div className="bg-surface-muted p-2.5 rounded-md font-mono text-[11px] text-ink-primary overflow-x-auto">
+                pdflatex resume.tex
+              </div>
+              <ul className="text-xs text-ink-secondary space-y-1.5 list-disc list-inside">
+                <li>Compatible with Overleaf (pdfLaTeX engine)</li>
+                <li>Uses only standard TeX Live core packages</li>
+                <li>No custom fonts required (Computer Modern / TeX Gyre)</li>
+              </ul>
+            </div>
+
+            {/* Included Packages */}
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-xs space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-ink-muted">Standard Packages Used</h4>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <Badge variant="outline" size="sm" className="font-mono text-[10px]">geometry</Badge>
+                <Badge variant="outline" size="sm" className="font-mono text-[10px]">hyperref</Badge>
+                <Badge variant="outline" size="sm" className="font-mono text-[10px]">enumitem</Badge>
+                <Badge variant="outline" size="sm" className="font-mono text-[10px]">titlesec</Badge>
+                <Badge variant="outline" size="sm" className="font-mono text-[10px]">xcolor</Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: Editable Review Form */}
       {activeTab === 'edit' && (
         <div className="bg-surface border border-border rounded-lg p-6 shadow-xs space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border">
