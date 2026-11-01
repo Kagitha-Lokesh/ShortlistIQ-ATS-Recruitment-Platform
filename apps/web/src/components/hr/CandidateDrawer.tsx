@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { shortlistApi } from '../../lib/api.js';
 import {
   X,
@@ -250,14 +251,21 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
   const displayEmail = isBlindMode ? '[Protected Demographic]' : (candidate.email || 'No email on file');
   const displayPhone = isBlindMode ? '[Protected Demographic]' : candidate.phone;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="candidate-drawer-title"
       className="fixed inset-0 z-50 overflow-hidden bg-slate-950/40 flex justify-end"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div ref={containerRef} className="w-full max-w-2xl bg-surface h-full shadow-2xl flex flex-col focus:outline-none" tabIndex={-1}>
+      <div
+        ref={containerRef}
+        className="w-full max-w-2xl xl:max-w-3xl bg-surface h-full shadow-2xl flex flex-col focus:outline-none"
+        tabIndex={-1}
+      >
         {/* Drawer Header */}
         <div className="p-4 sm:p-5 border-b border-border bg-surface-subtle flex items-start justify-between">
           <div className="min-w-0 flex-1 pr-3">
@@ -392,9 +400,9 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
               {/* Match Score & 5 Breakdown Bars */}
               <div className="p-4 bg-surface border border-border rounded-xl flex flex-col sm:flex-row items-center gap-5 shadow-xs">
                 <div className="flex flex-col items-center justify-center shrink-0">
-                  <div className="relative w-18 h-18 flex items-center justify-center">
-                    <svg className="w-18 h-18 -rotate-90">
-                      <circle cx="36" cy="36" r="30" stroke="#e2e8f0" strokeWidth="6" fill="none" />
+                  <div className="relative w-20 h-20 flex items-center justify-center">
+                    <svg className="w-20 h-20 -rotate-90" viewBox="0 0 72 72">
+                      <circle cx="36" cy="36" r="30" stroke="#E2E8F0" strokeWidth="6" fill="none" />
                       <circle
                         ref={circleRef}
                         cx="36"
@@ -408,7 +416,9 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                         fill="none"
                       />
                     </svg>
-                    <span ref={scoreNumberRef} className="absolute text-lg font-bold text-ink-primary tabular-nums">{score}%</span>
+                    <span ref={scoreNumberRef} className="absolute inset-0 flex items-center justify-center text-base font-bold text-ink-primary tabular-nums">
+                      {score}%
+                    </span>
                   </div>
                   <span className="text-[10px] text-ink-muted font-medium uppercase mt-1">
                     Match Estimate
@@ -704,6 +714,7 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
