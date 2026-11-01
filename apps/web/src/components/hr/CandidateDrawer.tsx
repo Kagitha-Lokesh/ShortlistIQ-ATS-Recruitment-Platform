@@ -627,18 +627,30 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
         </div>
 
         {/* Sticky Drawer Footer Decision Actions */}
-        {!isBatchFinalized && (
-          <div className="p-4 border-t border-border bg-surface-subtle flex items-center justify-between gap-3">
+        <div className="p-4 border-t border-border bg-surface-subtle flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleDecision('unshortlisted')}
-              isLoading={isUpdatingDecision}
-              leftIcon={<UserX className="w-3.5 h-3.5" />}
+              onClick={onClose}
+              title="Close Drawer"
             >
-              Move to Unshortlisted
+              Close
             </Button>
+            {!isBatchFinalized && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDecision('unshortlisted')}
+                isLoading={isUpdatingDecision}
+                leftIcon={<UserX className="w-3.5 h-3.5" />}
+              >
+                Move to Unshortlisted
+              </Button>
+            )}
+          </div>
 
+          {!isBatchFinalized && (
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -659,8 +671,8 @@ export const CandidateDrawer: React.FC<CandidateDrawerProps> = ({
                 Shortlist Candidate
               </Button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Override Note Dialog */}
         {overrideCriterion && (
