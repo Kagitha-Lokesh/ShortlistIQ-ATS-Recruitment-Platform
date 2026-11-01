@@ -16,7 +16,8 @@ import {
   Loader2,
   CheckCheck,
   CheckCircle2,
-  Info
+  Info,
+  Code2
 } from 'lucide-react';
 import { scoreResume } from '@shortlistiq/engine';
 import { checksApi, CandidateCheckData, SuggestionItem, ApiError } from '../../lib/api.js';
@@ -262,6 +263,11 @@ export const SuggestionsPage: React.FC = () => {
           >
             Accept All High-Impact
           </Button>
+          <Link to={`/checks/${id}/export?tab=latex`}>
+            <Button variant="outline" size="sm" leftIcon={<Code2 className="w-3.5 h-3.5 text-primary" />}>
+              LaTeX Code
+            </Button>
+          </Link>
           <Link to={`/checks/${id}/export`}>
             <Button variant="primary" size="sm" rightIcon={<FileText className="w-3.5 h-3.5" />}>
               Customize & Export Resume
@@ -551,13 +557,20 @@ export const SuggestionsPage: React.FC = () => {
                 onClick={handleCopyEnhancedResume}
                 leftIcon={<Copy className="w-3.5 h-3.5" />}
               >
-                Copy Enhanced Text
+                Copy Text
               </Button>
-              <Link to={`/checks/${id}/export`}>
-                <Button variant="primary" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                  Export Resume
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link to={`/checks/${id}/export?tab=latex`}>
+                  <Button variant="outline" size="sm" leftIcon={<Code2 className="w-3.5 h-3.5 text-primary" />}>
+                    LaTeX Code
+                  </Button>
+                </Link>
+                <Link to={`/checks/${id}/export`}>
+                  <Button variant="primary" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
+                    Export
+                  </Button>
+                </Link>
+              </div>
             </div>
           </Card>
 

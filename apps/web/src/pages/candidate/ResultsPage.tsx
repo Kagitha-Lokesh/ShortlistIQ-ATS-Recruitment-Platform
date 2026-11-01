@@ -100,40 +100,8 @@ export const ResultsPage: React.FC = () => {
       .finally(() => setIsLoading(false));
   }, [id]);
 
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-44 w-full rounded-lg" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Skeleton className="h-64 rounded-lg" />
-          <Skeleton className="h-64 rounded-lg" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !check) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-red-50 text-state-danger flex items-center justify-center mx-auto border border-red-200">
-          <XCircle className="w-6 h-6" />
-        </div>
-        <h2 className="text-lg font-bold text-ink-primary">Resume Check Not Found</h2>
-        <p className="text-xs text-ink-secondary">{error || 'Unable to locate this analysis record.'}</p>
-        <Button
-          variant="primary"
-          leftIcon={<RotateCcw className="w-4 h-4" />}
-          onClick={() => navigate('/checker')}
-        >
-          Try Another Resume
-        </Button>
-      </div>
-    );
-  }
-
-  const breakdown = check.breakdown;
-  const overallScore = Math.round(check.scoreBefore ?? 0);
+  const breakdown = check?.breakdown;
+  const overallScore = Math.round(check?.scoreBefore ?? 0);
 
   // SVG circular progress calculation
   const radius = 54;
@@ -147,7 +115,7 @@ export const ResultsPage: React.FC = () => {
       ? { text: 'text-state-warning', stroke: '#92400E', label: 'Moderate Alignment (Needs Optimization)', variant: 'needs_review' as const }
       : { text: 'text-state-danger', stroke: '#991B1B', label: 'Low Keyword Alignment', variant: 'unshortlisted' as const };
 
-  // GSAP animation for score ring, numeric counter, and breakdown progress bars
+  // GSAP animation for score ring, numeric counter, and breakdown progress bars (must be before any early returns)
   useGSAP(
     () => {
       if (!check || !containerRef.current) return;
@@ -209,6 +177,38 @@ export const ResultsPage: React.FC = () => {
     },
     { dependencies: [check?.id, overallScore], scope: containerRef }
   );
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-44 w-full rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-64 rounded-lg" />
+          <Skeleton className="h-64 rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !check) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
+        <div className="w-12 h-12 rounded-full bg-red-50 text-state-danger flex items-center justify-center mx-auto border border-red-200">
+          <XCircle className="w-6 h-6" />
+        </div>
+        <h2 className="text-lg font-bold text-ink-primary">Resume Check Not Found</h2>
+        <p className="text-xs text-ink-secondary">{error || 'Unable to locate this analysis record.'}</p>
+        <Button
+          variant="primary"
+          leftIcon={<RotateCcw className="w-4 h-4" />}
+          onClick={() => navigate('/checker')}
+        >
+          Try Another Resume
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="max-w-4xl mx-auto px-4 py-6 space-y-6 pb-16">

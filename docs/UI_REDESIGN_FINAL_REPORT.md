@@ -147,3 +147,4 @@ TOTAL: 169 tests passed, 0 failed across entire workspace.
    - Currently, Blind Review mode in HR Batch Results defaults to `off` (with local storage persistence). If organization compliance requires anonymized evaluation by default, this can be switched to `true` with one configuration line.
 3. **Branch Merge:**
    - The `ui-redesign` branch is clean, fully verified, and ready to be merged into `main`.
+
