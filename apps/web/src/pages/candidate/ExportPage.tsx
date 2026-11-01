@@ -145,7 +145,7 @@ export const ExportPage: React.FC = () => {
       .then((res) => {
         setVerification(res.data.verification);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setIsVerifying(false));
   };
 
@@ -241,7 +241,7 @@ export const ExportPage: React.FC = () => {
           setLatexSource(res.data.latexSource);
           updateAtsCheck(id, { latexSource: res.data.latexSource });
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   };
 
@@ -366,11 +366,10 @@ export const ExportPage: React.FC = () => {
             setActiveTab('preview');
             setSearchParams({ tab: 'preview' }, { replace: true });
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
-            activeTab === 'preview'
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'preview'
               ? 'border-primary text-primary font-bold'
               : 'border-transparent text-ink-secondary hover:text-ink-primary'
-          }`}
+            }`}
         >
           <Layout className="w-4 h-4" />
           Templates & Live A4 Preview
@@ -383,14 +382,13 @@ export const ExportPage: React.FC = () => {
               checksApi
                 .getLatexSource(id, { resumeData, options })
                 .then((res) => setLatexSource(res.data.latexSource))
-                .catch(() => {});
+                .catch(() => { });
             }
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
-            activeTab === 'latex'
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'latex'
               ? 'border-primary text-primary font-bold'
               : 'border-transparent text-ink-secondary hover:text-ink-primary'
-          }`}
+            }`}
         >
           <Code2 className="w-4 h-4" />
           <span>LaTeX Source & Compiler</span>
@@ -403,11 +401,10 @@ export const ExportPage: React.FC = () => {
             setActiveTab('edit');
             setSearchParams({ tab: 'edit' }, { replace: true });
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
-            activeTab === 'edit'
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'edit'
               ? 'border-primary text-primary font-bold'
               : 'border-transparent text-ink-secondary hover:text-ink-primary'
-          }`}
+            }`}
         >
           <Edit3 className="w-4 h-4" />
           Edit Resume Content
@@ -436,11 +433,10 @@ export const ExportPage: React.FC = () => {
                   <button
                     key={tpl.id}
                     onClick={() => handleOptionChange({ ...options, template: tpl.id as any })}
-                    className={`p-3 text-left rounded-lg border text-xs transition-all ${
-                      options.template === tpl.id
+                    className={`p-3 text-left rounded-lg border text-xs transition-all ${options.template === tpl.id
                         ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
                         : 'border-border hover:border-border-strong bg-surface text-ink-primary'
-                    }`}
+                      }`}
                   >
                     <span className="font-bold block mb-0.5">{tpl.name}</span>
                     <span className="text-[10px] text-ink-secondary leading-tight block">{tpl.desc}</span>
@@ -462,9 +458,8 @@ export const ExportPage: React.FC = () => {
                     key={key}
                     onClick={() => handleOptionChange({ ...options, accentColor: key as any })}
                     title={col.name}
-                    className={`w-7 h-7 rounded-full transition-transform ${col.bgClass} ${
-                      options.accentColor === key ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105'
-                    }`}
+                    className={`w-7 h-7 rounded-full transition-transform ${col.bgClass} ${options.accentColor === key ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105'
+                      }`}
                   />
                 ))}
               </div>
@@ -482,11 +477,10 @@ export const ExportPage: React.FC = () => {
                     <button
                       key={sz}
                       onClick={() => handleOptionChange({ ...options, fontSize: sz })}
-                      className={`py-1.5 text-xs font-medium capitalize rounded-md border transition-colors ${
-                        options.fontSize === sz
+                      className={`py-1.5 text-xs font-medium capitalize rounded-md border transition-colors ${options.fontSize === sz
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-surface text-ink-secondary border-border hover:bg-surface-hover'
-                      }`}
+                        }`}
                     >
                       {sz}
                     </button>
@@ -504,11 +498,10 @@ export const ExportPage: React.FC = () => {
                     <button
                       key={m}
                       onClick={() => handleOptionChange({ ...options, margins: m })}
-                      className={`py-1.5 text-xs font-medium capitalize rounded-md border transition-colors ${
-                        options.margins === m
+                      className={`py-1.5 text-xs font-medium capitalize rounded-md border transition-colors ${options.margins === m
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-surface text-ink-secondary border-border hover:bg-surface-hover'
-                      }`}
+                        }`}
                     >
                       {m}
                     </button>
@@ -521,22 +514,19 @@ export const ExportPage: React.FC = () => {
           {/* Right Main Pane: Live A4 HTML Preview (8 Cols) */}
           <div className="lg:col-span-8 flex justify-center bg-surface-muted p-6 rounded-lg border border-border overflow-x-auto">
             <div
-              className={`w-full max-w-[760px] min-h-[960px] bg-white text-slate-900 shadow-md border border-slate-200 transition-all ${
-                options.template === 'classic' ? 'font-serif' : 'font-sans'
-              } ${
-                options.margins === 'compact'
+              className={`w-full max-w-[760px] min-h-[960px] bg-white text-slate-900 shadow-md border border-slate-200 transition-all ${options.template === 'classic' ? 'font-serif' : 'font-sans'
+                } ${options.margins === 'compact'
                   ? 'p-8'
                   : options.margins === 'spacious'
-                  ? 'p-14'
-                  : 'p-10'
-              }`}
+                    ? 'p-14'
+                    : 'p-10'
+                }`}
             >
               {/* Header */}
               <div className={`mb-5 ${options.template === 'classic' ? 'text-center' : 'text-left'}`}>
                 <h2
-                  className={`font-bold tracking-tight text-slate-900 ${
-                    options.fontSize === 'small' ? 'text-xl' : options.fontSize === 'large' ? 'text-3xl' : 'text-2xl'
-                  }`}
+                  className={`font-bold tracking-tight text-slate-900 ${options.fontSize === 'small' ? 'text-xl' : options.fontSize === 'large' ? 'text-3xl' : 'text-2xl'
+                    }`}
                   style={{ color: options.template === 'modern' ? currentAccent.hex : '#0F172A' }}
                 >
                   {resumeData.contact.fullName || 'Candidate Name'}
