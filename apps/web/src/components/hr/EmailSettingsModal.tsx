@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { shortlistApi, EmailAccount } from '../../lib/api.js';
 import {
@@ -72,11 +73,16 @@ export const EmailSettingsModal: React.FC<EmailSettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-xl w-full overflow-hidden flex flex-col">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-surface rounded-xl shadow-2xl border border-border max-w-xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-border flex items-center justify-between bg-slate-50">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface-subtle shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-brand-indigo">
               <Mail className="w-4 h-4" />
@@ -273,16 +279,17 @@ export const EmailSettingsModal: React.FC<EmailSettingsModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3.5 border-t border-slate-border bg-slate-50 flex justify-end">
+        <div className="px-6 py-3.5 border-t border-border bg-surface-subtle flex justify-end shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors shadow-xs"
+            className="px-4 py-1.5 text-xs font-semibold rounded bg-surface border border-border text-ink-primary hover:bg-surface-hover transition-colors shadow-xs"
           >
             Done
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

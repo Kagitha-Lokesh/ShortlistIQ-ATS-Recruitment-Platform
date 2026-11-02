@@ -502,7 +502,7 @@ export const BatchDetailPage: React.FC = () => {
             Criteria
           </Button>
 
-          {/* Templates Button */}
+          {/* Email Templates Button */}
           <Button
             variant="outline"
             size="sm"
@@ -510,6 +510,17 @@ export const BatchDetailPage: React.FC = () => {
             onClick={() => setShowTemplatesModal(true)}
           >
             Email Templates
+          </Button>
+
+          {/* Email Sender Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Mail className="w-3.5 h-3.5 text-ink-muted" />}
+            onClick={() => setShowEmailSettingsModal(true)}
+            title="Configure sending email account (Gmail / Outlook)"
+          >
+            Email Sender
           </Button>
 
           {/* Export CSV Button */}
@@ -1199,6 +1210,10 @@ export const BatchDetailPage: React.FC = () => {
           candidateCounts={counts}
           isOpen={showFinalizeModal}
           onClose={() => setShowFinalizeModal(false)}
+          onOpenEmailSettings={() => {
+            setShowFinalizeModal(false);
+            setShowEmailSettingsModal(true);
+          }}
           onFinalizedSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['batch', batchId] });
             queryClient.invalidateQueries({ queryKey: ['batch-candidates', batchId] });

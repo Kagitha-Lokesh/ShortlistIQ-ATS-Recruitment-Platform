@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -87,7 +88,7 @@ export const Drawer: React.FC<DrawerProps> = ({
     full: 'max-w-full'
   };
 
-  return (
+  return createPortal(
     <div
       ref={containerRef}
       className="fixed inset-0 z-50 overflow-hidden"
@@ -143,7 +144,8 @@ export const Drawer: React.FC<DrawerProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

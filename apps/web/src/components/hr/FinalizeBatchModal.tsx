@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { shortlistApi, FinalizeBatchResult } from '../../lib/api.js';
 import {
@@ -25,6 +26,7 @@ interface FinalizeBatchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFinalizedSuccess?: () => void;
+  onOpenEmailSettings?: () => void;
 }
 
 export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
@@ -33,7 +35,8 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
   candidateCounts,
   isOpen,
   onClose,
-  onFinalizedSuccess
+  onFinalizedSuccess,
+  onOpenEmailSettings
 }) => {
   const queryClient = useQueryClient();
   const [confirmationText, setConfirmationText] = useState('');
@@ -49,6 +52,17 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
   const connectedAccount = accounts[0] || null;
   const hasNeedsReview = (candidateCounts.needsReview || 0) > 0;
   const totalRecipients = (candidateCounts.shortlisted || 0) + (candidateCounts.unshortlisted || 0);
+
+  // Quick connect mock sender mutation for fast testing
+  const quickConnectMutation = useMutation({
+    mutationFn: () => shortlistApi.connectMockEmail('gmail', 'recruiter@company.com'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-accounts'] });
+    },
+    onError: (err: any) => {
+      setErrorMessage(err.message || 'Failed to connect test sender');
+    }
+  });
 
   // Finalize Mutation
   const finalizeMutation = useMutation<FinalizeBatchResult, Error>({
@@ -69,11 +83,16 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 flex items-center justify-center p-4">
-      <div className="bg-surface rounded-lg shadow-xl border border-border max-w-lg w-full overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-surface rounded-xl shadow-2xl border border-border max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface-subtle">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface-subtle shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded bg-surface border border-border flex items-center justify-center text-ink-primary">
               <Lock className="w-4 h-4 text-brand" />
@@ -92,7 +111,7 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
           {errorMessage && (
             <div className="p-3 bg-red-50 border border-red-200 rounded flex items-start gap-2.5 text-xs text-state-danger">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -195,7 +214,7 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
               </div>
 
               {/* Connected Sender Info */}
-              <div className="p-3.5 border border-border rounded bg-surface-subtle flex items-center justify-between">
+              <div className="p-3.5 border border-border rounded-lg bg-surface-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <Mail className="w-4 h-4 text-brand shrink-0" />
                   <div>
@@ -207,13 +226,34 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
                     <p className="text-[11px] text-ink-secondary">
                       {connectedAccount
                         ? `Sending via ${connectedAccount.provider.toUpperCase()} OAuth integration`
-                        : 'Please connect an account in Email Settings first.'}
+                        : 'Connect an account to enable dispatch.'}
                     </p>
                   </div>
                 </div>
-                {!connectedAccount && (
-                  <span className="text-[11px] font-semibold text-state-danger bg-red-50 px-2 py-0.5 rounded border border-red-200">
-                    Required
+
+                {!connectedAccount ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => quickConnectMutation.mutate()}
+                      disabled={quickConnectMutation.isPending}
+                      className="px-2.5 py-1 text-xs font-semibold rounded bg-primary text-primary-foreground hover:bg-primary-hover transition-colors shadow-2xs"
+                    >
+                      {quickConnectMutation.isPending ? 'Connecting...' : 'Connect Test Sender'}
+                    </button>
+                    {onOpenEmailSettings && (
+                      <button
+                        type="button"
+                        onClick={onOpenEmailSettings}
+                        className="px-2.5 py-1 text-xs font-semibold rounded bg-surface border border-border text-ink-secondary hover:text-ink-primary hover:bg-surface-hover transition-colors"
+                      >
+                        Email Settings
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Connected
                   </span>
                 )}
               </div>
@@ -279,7 +319,8 @@ export const FinalizeBatchModal: React.FC<FinalizeBatchModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

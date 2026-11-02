@@ -96,7 +96,7 @@ export const HRLayout: React.FC = () => {
       gsap.fromTo(
         mainRef.current,
         { opacity: 0.9, y: 3 },
-        { opacity: 1, y: 0, duration: 0.16, ease: 'power1.out' }
+        { opacity: 1, y: 0, duration: 0.16, ease: 'power1.out', clearProps: 'transform' }
       );
     }
   }, [location.pathname]);
